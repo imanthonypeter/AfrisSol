@@ -1,23 +1,23 @@
 /// <reference types="vite/client" />
 
 declare module "*.jpeg" {
-  const src: string;
-  export default src;
+  const jpegPath: string;
+  export default jpegPath;
 }
 
 declare module "*.jpg" {
-  const src: string;
-  export default src;
+  const jpgPath: string;
+  export default jpgPath;
 }
 
 declare module "*.png" {
-  const src: string;
-  export default src;
+  const pngPath: string;
+  export default pngPath;
 }
 
 declare module "*.svg" {
   import React = require("react");
   export const ReactComponent: React.FC<React.SVGProps<SVGSVGElement>>;
-  const src: string;
-  export default src;
+  const svgPath: string;
+  export default svgPath;
 }
