@@ -109,5 +109,5 @@ This project is private. All rights reserved.
 ---
 
 <p align="center">
-  <sub>Built with ❤️ for Mozambique</sub>
+  <sub>Built with ❤️ for Angola</sub>
 </p>
