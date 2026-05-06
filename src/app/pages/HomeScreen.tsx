@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   Bell, Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Zap, MoreHorizontal,
-  TrendingUp, TrendingDown, Smartphone, Wifi, ChevronRight
+  TrendingUp, Wifi, ChevronRight
 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 
