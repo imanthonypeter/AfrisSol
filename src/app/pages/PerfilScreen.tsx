@@ -2,47 +2,50 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   User, Shield, HelpCircle, Bell, ChevronRight, LogOut,
-  Edit3, Phone, Mail, MapPin, Lock, Fingerprint, Eye, MessageCircle, FileText, Star
+  Edit3, Phone, Mail, MapPin, Lock, Fingerprint, Eye, MessageCircle, FileText, Star, DollarSign
 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
 
-const menuSections = [
-  {
-    title: "Conta",
-    items: [
-      { icon: <User size={18} />, label: "Dados pessoais", sub: "Nome, telefone, email", color: "#6366f1", bg: "#EEF2FF" },
-      { icon: <Bell size={18} />, label: "Notificações", sub: "Gerir alertas e avisos", color: "#F47C20", bg: "#FFF3E0" },
-      { icon: <Eye size={18} />, label: "Privacidade", sub: "Controle de dados", color: "#22c55e", bg: "#E8F5E9" },
-    ],
-  },
-  {
-    title: "Segurança",
-    items: [
-      { icon: <Lock size={18} />, label: "Alterar PIN", sub: "Actualizar palavra-passe", color: "#162456", bg: "#EFF6FF" },
-      { icon: <Fingerprint size={18} />, label: "Biometria", sub: "Digital e reconhecimento facial", color: "#8b5cf6", bg: "#F5F3FF" },
-      { icon: <Shield size={18} />, label: "Autenticação 2FA", sub: "Segurança adicional", color: "#ef4444", bg: "#FEF2F2" },
-    ],
-  },
-  {
-    title: "Suporte",
-    items: [
-      { icon: <MessageCircle size={18} />, label: "Chat de suporte", sub: "Falar com um agente", color: "#F47C20", bg: "#FFF3E0" },
-      { icon: <HelpCircle size={18} />, label: "Centro de ajuda", sub: "Perguntas frequentes", color: "#6366f1", bg: "#EEF2FF" },
-      { icon: <FileText size={18} />, label: "Termos e condições", sub: "Políticas de uso", color: "#6B7280", bg: "#F3F4F6" },
-      { icon: <Star size={18} />, label: "Avaliar a app", sub: "Deixe a sua opinião", color: "#f59e0b", bg: "#FFFBEB" },
-    ],
-  },
-];
-
+import { CurrencySelector } from "../components/CurrencySelector";
 export function PerfilScreen() {
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
-  const { user, settings, updateUser, updateSettings } = useAppStore();
+  const [showCurrencySelector, setShowCurrencySelector] = useState(false);
+  const { user, settings, wallet, updateUser, updateSettings } = useAppStore();
 
   const handleToggleBiometrics = () => {
     updateSettings({ biometrics: !settings.biometrics });
   };
+
+  const menuSections = [
+    {
+      title: "Conta",
+      items: [
+        { icon: <User size={18} />, label: "Dados pessoais", sub: "Nome, telefone, email", color: "#6366f1", bg: "#EEF2FF" },
+        { icon: <DollarSign size={18} />, label: "Moeda Principal", sub: wallet.currency, color: "#10b981", bg: "#d1fae5", onClick: () => setShowCurrencySelector(true) },
+        { icon: <Bell size={18} />, label: "Notificações", sub: "Gerir alertas e avisos", color: "#F47C20", bg: "#FFF3E0" },
+        { icon: <Eye size={18} />, label: "Privacidade", sub: "Controle de dados", color: "#22c55e", bg: "#E8F5E9" },
+      ],
+    },
+    {
+      title: "Segurança",
+      items: [
+        { icon: <Lock size={18} />, label: "Alterar PIN", sub: "Actualizar palavra-passe", color: "#162456", bg: "#EFF6FF" },
+        { icon: <Fingerprint size={18} />, label: "Biometria", sub: "Digital e reconhecimento facial", color: "#8b5cf6", bg: "#F5F3FF", onClick: handleToggleBiometrics },
+        { icon: <Shield size={18} />, label: "Autenticação 2FA", sub: "Segurança adicional", color: "#ef4444", bg: "#FEF2F2" },
+      ],
+    },
+    {
+      title: "Suporte",
+      items: [
+        { icon: <MessageCircle size={18} />, label: "Chat de suporte", sub: "Falar com um agente", color: "#F47C20", bg: "#FFF3E0" },
+        { icon: <HelpCircle size={18} />, label: "Centro de ajuda", sub: "Perguntas frequentes", color: "#6366f1", bg: "#EEF2FF" },
+        { icon: <FileText size={18} />, label: "Termos e condições", sub: "Políticas de uso", color: "#6B7280", bg: "#F3F4F6" },
+        { icon: <Star size={18} />, label: "Avaliar a app", sub: "Deixe a sua opinião", color: "#f59e0b", bg: "#FFFBEB" },
+      ],
+    },
+  ];
 
   return (
     <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
@@ -143,7 +146,7 @@ export function PerfilScreen() {
               <div key={i}>
                 <button 
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-                  onClick={item.label === "Biometria" ? handleToggleBiometrics : undefined}
+                  onClick={item.onClick}
                 >
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -185,6 +188,11 @@ export function PerfilScreen() {
 
       {/* Version */}
       <p className="text-center text-gray-300 text-xs pb-4">AfrisSol v1.0.0 — A Sua Carteira Digital</p>
+
+      <CurrencySelector 
+        isOpen={showCurrencySelector} 
+        onClose={() => setShowCurrencySelector(false)} 
+      />
     </div>
   );
 }

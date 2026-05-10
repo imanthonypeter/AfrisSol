@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowUpRight, ArrowDownLeft, Search, ChevronRight, Check } from "lucide-react";
+import { useAppStore } from "../../store/useAppStore";
 
 const contacts = [
   { id: 1, name: "Maria Santos", phone: "+258 84 123 4567", initials: "MS", color: "#6366f1" },
@@ -14,6 +15,7 @@ export function TransferenciasScreen() {
   const [recipient, setRecipient] = useState("");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
   const [selectedContact, setSelectedContact] = useState<typeof contacts[0] | null>(null);
+  const { wallet } = useAppStore();
 
   const handleSend = () => {
     if (amount && (recipient || selectedContact)) setStep("confirm");
@@ -64,8 +66,8 @@ export function TransferenciasScreen() {
           </h2>
           <p className="text-gray-500 text-sm text-center mb-2">
             {tab === "enviar"
-              ? `${amount} MT enviados com sucesso`
-              : `Pedido de ${amount} MT enviado`}
+              ? `${amount} ${wallet.currency} enviados com sucesso`
+              : `Pedido de ${amount} ${wallet.currency} enviado`}
           </p>
           <p className="text-gray-400 text-xs mb-8">Referência: #TRF20240501</p>
           <button
@@ -86,9 +88,9 @@ export function TransferenciasScreen() {
             <div className="space-y-3">
               {[
                 { label: tab === "enviar" ? "Destinatário" : "De", value: selectedContact?.name || recipient },
-                { label: "Valor", value: `${amount} MT` },
-                { label: "Taxa", value: "0,00 MT" },
-                { label: "Total", value: `${amount} MT` },
+                { label: "Valor", value: `${amount} ${wallet.currency}` },
+                { label: "Taxa", value: `0,00 ${wallet.currency}` },
+                { label: "Total", value: `${amount} ${wallet.currency}` },
               ].map((row) => (
                 <div key={row.label} className="flex justify-between py-2 border-b border-gray-50">
                   <span className="text-gray-500 text-sm">{row.label}</span>
@@ -130,7 +132,7 @@ export function TransferenciasScreen() {
                     onChange={(e) => setAmount(e.target.value)}
                     style={{ fontSize: "28px", fontWeight: 700 }}
                   />
-                  <span className="text-gray-400 text-lg" style={{ fontWeight: 500 }}>MT</span>
+                  <span className="text-gray-400 text-lg" style={{ fontWeight: 500 }}>{wallet.currency}</span>
                 </div>
                 <div className="flex gap-2 mt-3">
                   {["500", "1.000", "2.500", "5.000"].map((v) => (
@@ -215,7 +217,7 @@ export function TransferenciasScreen() {
                     onChange={(e) => setAmount(e.target.value)}
                     style={{ fontSize: "28px", fontWeight: 700 }}
                   />
-                  <span className="text-gray-400 text-lg" style={{ fontWeight: 500 }}>MT</span>
+                  <span className="text-gray-400 text-lg" style={{ fontWeight: 500 }}>{wallet.currency}</span>
                 </div>
               </div>
 

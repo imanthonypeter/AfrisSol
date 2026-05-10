@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { Wifi, Zap, Droplets, Tv, Phone, ShoppingBag, Car, GraduationCap, Heart, ChevronRight, Check } from "lucide-react";
+import { useAppStore } from "../../store/useAppStore";
 
 const services = [
   { id: "internet", icon: <Wifi size={22} />, label: "Internet", provider: "Vodacom, Movitel, TMcel", color: "#6366f1", bg: "#EEF2FF" },
@@ -15,11 +15,11 @@ const services = [
 ];
 
 export function PagamentosScreen() {
-  const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
   const [step, setStep] = useState<"list" | "form" | "confirm" | "success">("list");
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
+  const { wallet } = useAppStore();
 
   const selectedService = services.find((s) => s.id === selected);
 
@@ -76,8 +76,8 @@ export function PagamentosScreen() {
           <h3 className="text-gray-700 mt-5 mb-3" style={{ fontWeight: 600, fontSize: "14px" }}>Pagamentos recentes</h3>
           <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
             {[
-              { label: "Electricidade EDM", ref: "Ref: 12345678", amount: "800,00 MT", color: "#F47C20", bg: "#FFF3E0", icon: <Zap size={16} color="#F47C20" /> },
-              { label: "Internet Vodacom", ref: "Ref: 87654321", amount: "500,00 MT", color: "#6366f1", bg: "#EEF2FF", icon: <Wifi size={16} color="#6366f1" /> },
+              { label: "Electricidade EDM", ref: "Ref: 12345678", amount: `800,00 ${wallet.currency}`, color: "#F47C20", bg: "#FFF3E0", icon: <Zap size={16} color="#F47C20" /> },
+              { label: "Internet Vodacom", ref: "Ref: 87654321", amount: `500,00 ${wallet.currency}`, color: "#6366f1", bg: "#EEF2FF", icon: <Wifi size={16} color="#6366f1" /> },
             ].map((p, i) => (
               <div key={i}>
                 <div className="flex items-center gap-3 px-4 py-3.5">
@@ -128,7 +128,7 @@ export function PagamentosScreen() {
             </div>
 
             <div className="bg-white rounded-2xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-              <label className="text-gray-500 text-xs mb-2 block" style={{ fontWeight: 500 }}>VALOR A PAGAR (MT)</label>
+              <label className="text-gray-500 text-xs mb-2 block" style={{ fontWeight: 500 }}>VALOR A PAGAR ({wallet.currency})</label>
               <input
                 type="number"
                 className="w-full outline-none text-gray-800 bg-transparent"
@@ -157,9 +157,9 @@ export function PagamentosScreen() {
             {[
               { label: "Serviço", value: selectedService.label },
               { label: "Referência", value: reference },
-              { label: "Valor", value: `${amount} MT` },
-              { label: "Taxa", value: "0,00 MT" },
-              { label: "Total", value: `${amount} MT` },
+              { label: "Valor", value: `${amount} ${wallet.currency}` },
+              { label: "Taxa", value: `0,00 ${wallet.currency}` },
+              { label: "Total", value: `${amount} ${wallet.currency}` },
             ].map((row) => (
               <div key={row.label} className="flex justify-between py-2.5 border-b border-gray-50 last:border-0">
                 <span className="text-gray-500 text-sm">{row.label}</span>

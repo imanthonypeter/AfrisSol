@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
+import { formatCurrency, convertAmount } from "../../utils/currency";
 
 export function CarteiraScreen() {
   const [balanceVisible, setBalanceVisible] = useState(true);
@@ -34,8 +35,12 @@ export function CarteiraScreen() {
           </div>
           {balanceVisible ? (
             <div className="flex items-baseline justify-center gap-2">
-              <span className="text-white text-3xl md:text-4xl" style={{ fontWeight: 700 }}>{wallet.balance}</span>
-              <span className="text-white/70 text-lg">{wallet.currency}</span>
+              <span className="text-white text-3xl md:text-4xl" style={{ fontWeight: 700 }}>
+                {formatCurrency(convertAmount(wallet.balance, "AOA", wallet.currency), wallet.currency).split(" ")[0]}
+              </span>
+              <span className="text-white/70 text-lg">
+                {formatCurrency(0, wallet.currency).split(" ")[1]}
+              </span>
             </div>
           ) : (
             <span className="text-white text-3xl md:text-4xl" style={{ fontWeight: 700 }}>••••••</span>
@@ -183,7 +188,9 @@ export function CarteiraScreen() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-gray-800 text-sm" style={{ fontWeight: 700 }}>{acc.balance}</p>
+                <p className="text-gray-800 text-sm" style={{ fontWeight: 700 }}>
+                  {formatCurrency(convertAmount(acc.balance, "AOA", wallet.currency), wallet.currency)}
+                </p>
               </div>
             </div>
           ))}
@@ -195,8 +202,8 @@ export function CarteiraScreen() {
         <h3 className="text-gray-700 mb-3" style={{ fontWeight: 600, fontSize: "14px" }}>Resumo do mês</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Entradas", value: "8.500,00 MT", color: "#22c55e", bg: "#E8F5E9" },
-            { label: "Saídas", value: "5.200,00 MT", color: "#EF4444", bg: "#FEF2F2" },
+            { label: "Entradas", value: formatCurrency(convertAmount(8500, "AOA", wallet.currency), wallet.currency), color: "#22c55e", bg: "#E8F5E9" },
+            { label: "Saídas", value: formatCurrency(convertAmount(5200, "AOA", wallet.currency), wallet.currency), color: "#EF4444", bg: "#FEF2F2" },
           ].map((stat) => (
             <div
               key={stat.label}

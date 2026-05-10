@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowUpRight, ArrowDownLeft, Zap, Wifi, Smartphone, Search, Filter } from "lucide-react";
 
 import { useAppStore } from "../../store/useAppStore";
+import { formatCurrency, convertAmount } from "../../utils/currency";
 
 function TxIcon({ icon }: { icon: string }) {
   const base = "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0";
@@ -18,7 +19,7 @@ const filters = ["Todas", "Transferência", "Pagamento", "Recarga", "Depósito"]
 export function HistoricoScreen() {
   const [activeFilter, setActiveFilter] = useState("Todas");
   const [search, setSearch] = useState("");
-  const { transactions } = useAppStore();
+  const { transactions, wallet } = useAppStore();
 
   const filtered = transactions.filter((tx) => {
     const matchFilter = activeFilter === "Todas" || tx.category === activeFilter;
@@ -26,8 +27,8 @@ export function HistoricoScreen() {
     return matchFilter && matchSearch;
   });
 
-  const totalIn = transactions.filter((t) => t.positive).reduce((acc, t) => acc + parseFloat(t.amount.replace("+", "").replace(".", "").replace(",", ".").replace(" KZ", "").replace(" MT", "")), 0);
-  const totalOut = transactions.filter((t) => !t.positive).reduce((acc, t) => acc + parseFloat(t.amount.replace("-", "").replace(".", "").replace(",", ".").replace(" KZ", "").replace(" MT", "")), 0);
+  const totalIn = transactions.filter((t) => t.positive).reduce((acc, t) => acc + t.amount, 0);
+  const totalOut = transactions.filter((t) => !t.positive).reduce((acc, t) => acc + t.amount, 0);
 
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ background: "#F5F7FA" }}>
@@ -42,11 +43,11 @@ export function HistoricoScreen() {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <p className="text-white/60 text-xs mb-0.5">Total entradas</p>
-            <p className="text-green-400 text-sm" style={{ fontWeight: 700 }}>+{(totalIn / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} KZ</p>
+            <p className="text-green-400 text-sm" style={{ fontWeight: 700 }}>+{formatCurrency(convertAmount(totalIn, "AOA", wallet.currency), wallet.currency)}</p>
           </div>
           <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <p className="text-white/60 text-xs mb-0.5">Total saídas</p>
-            <p className="text-red-400 text-sm" style={{ fontWeight: 700 }}>-{(totalOut / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} KZ</p>
+            <p className="text-red-400 text-sm" style={{ fontWeight: 700 }}>-{formatCurrency(convertAmount(totalOut, "AOA", wallet.currency), wallet.currency)}</p>
           </div>
         </div>
 
@@ -122,7 +123,7 @@ export function HistoricoScreen() {
                     className="text-sm flex-shrink-0"
                     style={{ color: tx.positive ? "#22c55e" : "#EF4444", fontWeight: 600 }}
                   >
-                    {tx.amount}
+                    {tx.positive ? "+" : "-"}{formatCurrency(convertAmount(tx.amount, "AOA", wallet.currency), wallet.currency)}
                   </span>
                 </div>
                 {i < filtered.length - 1 && <div className="h-px bg-gray-50 mx-4" />}

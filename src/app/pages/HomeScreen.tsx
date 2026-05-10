@@ -7,6 +7,7 @@ import {
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 
 import { useAppStore } from "../../store/useAppStore";
+import { formatCurrency, convertAmount } from "../../utils/currency";
 function TxIcon({ icon }: { icon: string }) {
   const base = "w-10 h-10 rounded-full flex items-center justify-center";
   if (icon === "receive") return <div className={base} style={{ background: "#E8F5E9" }}><ArrowDownLeft size={18} color="#22c55e" /></div>;
@@ -60,8 +61,12 @@ export function HomeScreen() {
           <div className="flex items-baseline gap-2 mb-4">
             {balanceVisible ? (
               <>
-                <span className="text-white text-3xl md:text-4xl" style={{ fontWeight: 700 }}>{wallet.balance}</span>
-                <span className="text-white/70 text-base" style={{ fontWeight: 500 }}>{wallet.currency}</span>
+                <span className="text-white text-3xl md:text-4xl" style={{ fontWeight: 700 }}>
+                  {formatCurrency(convertAmount(wallet.balance, "AOA", wallet.currency), wallet.currency).split(" ")[0]}
+                </span>
+                <span className="text-white/70 text-base" style={{ fontWeight: 500 }}>
+                  {formatCurrency(0, wallet.currency).split(" ")[1]}
+                </span>
               </>
             ) : (
               <span className="text-white text-3xl md:text-4xl" style={{ fontWeight: 700 }}>••••••</span>
@@ -158,7 +163,7 @@ export function HomeScreen() {
                   className="text-sm"
                   style={{ color: tx.positive ? "#22c55e" : "#EF4444", fontWeight: 600, whiteSpace: "nowrap" }}
                 >
-                  {tx.amount}
+                  {tx.positive ? "+" : "-"}{formatCurrency(convertAmount(tx.amount, "AOA", wallet.currency), wallet.currency)}
                 </span>
               </div>
               {i < transactions.length - 1 && <div className="h-px bg-gray-50 mx-4" />}

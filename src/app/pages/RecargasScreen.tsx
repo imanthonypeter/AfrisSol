@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Smartphone, Tv, Wifi, Car, Check, ChevronRight } from "lucide-react";
+import { useAppStore } from "../../store/useAppStore";
 
 const operators = [
   { id: "vodacom", label: "Vodacom", color: "#e53e3e", initials: "V" },
@@ -22,6 +23,7 @@ export function RecargasScreen() {
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
+  const { wallet } = useAppStore();
 
   return (
     <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
@@ -50,7 +52,7 @@ export function RecargasScreen() {
             <Check size={36} color="#22c55e" strokeWidth={2.5} />
           </div>
           <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>Recarga efectuada!</h2>
-          <p className="text-gray-500 text-sm text-center mb-2">{amount} MT carregados em +258 {phone}</p>
+          <p className="text-gray-500 text-sm text-center mb-2">{amount} {wallet.currency} carregados em +258 {phone}</p>
           <p className="text-gray-400 text-xs mb-8">Referência: #REC20240501</p>
           <button
             onClick={() => { setStep("form"); setAmount(""); setPhone(""); }}
@@ -67,9 +69,9 @@ export function RecargasScreen() {
             {[
               { label: "Operadora", value: operators.find((o) => o.id === operator)?.label || "" },
               { label: "Número", value: `+258 ${phone}` },
-              { label: "Valor", value: `${amount} MT` },
-              { label: "Bónus", value: "0 MT" },
-              { label: "Total", value: `${amount} MT` },
+              { label: "Valor", value: `${amount} ${wallet.currency}` },
+              { label: "Bónus", value: `0 ${wallet.currency}` },
+              { label: "Total", value: `${amount} ${wallet.currency}` },
             ].map((row) => (
               <div key={row.label} className="flex justify-between py-2.5 border-b border-gray-50 last:border-0">
                 <span className="text-gray-500 text-sm">{row.label}</span>
@@ -173,10 +175,10 @@ export function RecargasScreen() {
               <p className="text-gray-500 text-xs mb-3" style={{ fontWeight: 500 }}>PACOTE DE DADOS</p>
               <div className="space-y-2">
                 {[
-                  { label: "1 GB — 7 dias", price: "100 MT" },
-                  { label: "3 GB — 30 dias", price: "250 MT" },
-                  { label: "5 GB — 30 dias", price: "400 MT" },
-                  { label: "Ilimitado — 30 dias", price: "600 MT" },
+                  { label: "1 GB — 7 dias", price: `100 ${wallet.currency}` },
+                  { label: "3 GB — 30 dias", price: `250 ${wallet.currency}` },
+                  { label: "5 GB — 30 dias", price: `400 ${wallet.currency}` },
+                  { label: "Ilimitado — 30 dias", price: `600 ${wallet.currency}` },
                 ].map((pkg, i) => (
                   <button
                     key={i}
@@ -199,7 +201,7 @@ export function RecargasScreen() {
             <>
               {/* Amount */}
               <div className="bg-white rounded-2xl p-4 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-                <p className="text-gray-500 text-xs mb-3" style={{ fontWeight: 500 }}>VALOR DA RECARGA (MT)</p>
+                <p className="text-gray-500 text-xs mb-3" style={{ fontWeight: 500 }}>VALOR DA RECARGA ({wallet.currency})</p>
                 <div className="grid grid-cols-3 gap-2">
                   {amounts.map((v) => (
                     <button
@@ -213,7 +215,7 @@ export function RecargasScreen() {
                         fontWeight: amount === v ? 700 : 500,
                       }}
                     >
-                      {v} MT
+                      {v} {wallet.currency}
                     </button>
                   ))}
                 </div>
