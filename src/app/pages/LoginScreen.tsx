@@ -127,12 +127,11 @@ export function LoginScreen() {
             <div className="relative">
               <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                 <Phone size={16} color="#9CA3AF" />
-                <span className="text-gray-400 text-sm">+258</span>
-                <div className="w-px h-4 bg-gray-200" />
               </div>
               <input
-                className="w-full pl-20 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-800 outline-none focus:border-blue-600 transition-colors"
-                placeholder="84 XXX XXXX"
+                type="tel"
+                className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-800 outline-none focus:border-blue-600 transition-colors"
+                placeholder="Ex: 923 000 000"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 style={{ fontSize: "15px" }}
