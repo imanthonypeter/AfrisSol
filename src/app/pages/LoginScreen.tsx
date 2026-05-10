@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff, Phone } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
+import { useAppStore } from "../../store/useAppStore";
 
 export function LoginScreen() {
   const navigate = useNavigate();
