@@ -1,21 +1,35 @@
 import { useState } from "react";
-import { ArrowUpRight, ArrowDownLeft, Search, ChevronRight, Check } from "lucide-react";
-import { useAppStore } from "../../store/useAppStore";
-
-const contacts = [
-  { id: 1, name: "Maria Santos", phone: "+258 84 123 4567", initials: "MS", color: "#6366f1" },
-  { id: 2, name: "Carlos Moçambique", phone: "+258 86 987 6543", initials: "CM", color: "#F47C20" },
-  { id: 3, name: "Fatima Nhavene", phone: "+258 82 555 0123", initials: "FN", color: "#22c55e" },
-  { id: 4, name: "Pedro Macuácua", phone: "+258 84 888 7654", initials: "PM", color: "#ec4899" },
-];
+import { ArrowUpRight, ArrowDownLeft, Search, ChevronRight, Check, Plus, UserPlus, X } from "lucide-react";
+import { useAppStore, Contact } from "../../store/useAppStore";
 
 export function TransferenciasScreen() {
   const [tab, setTab] = useState<"enviar" | "receber">("enviar");
   const [amount, setAmount] = useState("");
   const [recipient, setRecipient] = useState("");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
-  const [selectedContact, setSelectedContact] = useState<typeof contacts[0] | null>(null);
-  const { wallet } = useAppStore();
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isAddingContact, setIsAddingContact] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const { wallet, contacts, addContact } = useAppStore();
+
+  const handleAddContact = () => {
+    if (!newName || !newPhone) return;
+    const initials = newName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    const colors = ["#6366f1", "#F47C20", "#22c55e", "#ec4899", "#8b5cf6", "#f59e0b"];
+    const newContact: Contact = {
+      id: Date.now(),
+      name: newName,
+      phone: newPhone,
+      initials,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    };
+    addContact(newContact);
+    setIsAddingContact(false);
+    setNewName("");
+    setNewPhone("");
+    setSelectedContact(newContact);
+  };
 
   const handleSend = () => {
     if (amount && (recipient || selectedContact)) setStep("confirm");
@@ -159,7 +173,16 @@ export function TransferenciasScreen() {
                     onChange={(e) => setRecipient(e.target.value)}
                   />
                 </div>
-                <p className="text-gray-400 text-xs mb-2">Contactos recentes</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-gray-400 text-xs">Contactos recentes</p>
+                  <button 
+                    onClick={() => setIsAddingContact(true)}
+                    className="flex items-center gap-1 text-[#F47C20] text-xs font-semibold hover:opacity-80"
+                  >
+                    <Plus size={14} />
+                    <span>Adicionar novo</span>
+                  </button>
+                </div>
                 <div className="space-y-2">
                   {contacts.map((c) => (
                     <button
@@ -274,6 +297,53 @@ export function TransferenciasScreen() {
               </button>
             </>
           )}
+        </div>
+      )}
+      {/* Add Contact Modal */}
+      {isAddingContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-gray-800 font-bold text-lg">Novo Destinatário</h3>
+              <button onClick={() => setIsAddingContact(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-gray-500 text-xs font-semibold mb-1.5 block">NOME COMPLETO</label>
+                <div className="relative">
+                  <UserPlus size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 outline-none focus:border-[#F47C20] text-gray-700 text-sm"
+                    placeholder="Ex: Manuel dos Santos"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-gray-500 text-xs font-semibold mb-1.5 block">TELEFONE OU IBAN</label>
+                <input
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 outline-none focus:border-[#F47C20] text-gray-700 text-sm"
+                  placeholder="+244 9XX XXX XXX"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleAddContact}
+              disabled={!newName || !newPhone}
+              className="w-full py-4 rounded-xl text-white shadow-lg disabled:opacity-50 transition-all active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
+            >
+              Salvar Destinatário
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -177,7 +177,10 @@ export function PerfilScreen() {
       {/* Logout */}
       <div className="px-5 mb-6">
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => {
+            useAppStore.getState().setAuthenticated(false);
+            navigate("/login");
+          }}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2"
           style={{ borderColor: "#FEF2F2", background: "#FEF2F2", color: "#ef4444" }}
         >

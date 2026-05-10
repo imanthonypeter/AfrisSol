@@ -17,6 +17,14 @@ export interface Account {
   color: string;
 }
 
+export interface Contact {
+  id: number;
+  name: string;
+  phone: string;
+  initials: string;
+  color: string;
+}
+
 export interface User {
   name: string;
   phone: string;
@@ -39,7 +47,9 @@ export interface AppState {
   };
   transactions: Transaction[];
   accounts: Account[];
+  contacts: Contact[];
   exchangeRates: Record<string, number> | null;
+  isAuthenticated: boolean;
 
   // Actions
   updateUser: (data: Partial<User>) => void;
@@ -47,6 +57,8 @@ export interface AppState {
   addTransaction: (tx: Transaction) => void;
   setCurrency: (code: string) => void;
   fetchExchangeRates: () => Promise<void>;
+  setAuthenticated: (val: boolean) => void;
+  addContact: (contact: Contact) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -83,11 +95,17 @@ export const useAppStore = create<AppState>((set) => ({
     { label: "Conta principal", num: "AO 1234 5678 9012", balance: 10000, color: "#162456" },
     { label: "Poupança", num: "AO 9876 5432 1098", balance: 0, color: "#F47C20" },
   ],
+  contacts: [
+    { id: 1, name: "Maria Santos", phone: "+258 84 123 4567", initials: "MS", color: "#6366f1" },
+    { id: 2, name: "Carlos Moçambique", phone: "+258 86 987 6543", initials: "CM", color: "#F47C20" },
+    { id: 3, name: "Fatima Nhavene", phone: "+258 82 555 0123", initials: "FN", color: "#22c55e" },
+    { id: 4, name: "Pedro Macuácua", phone: "+258 84 888 7654", initials: "PM", color: "#ec4899" },
+  ],
   exchangeRates: null,
+  isAuthenticated: false,
 
   updateUser: (data) => set((state) => ({ user: { ...state.user, ...data } })),
   updateSettings: (data) => set((state) => ({ settings: { ...state.settings, ...data } })),
-  addTransaction: (tx) => set((state) => ({ transactions: [tx, ...state.transactions] })),
   addTransaction: (tx) => set((state) => ({ transactions: [tx, ...state.transactions] })),
   setCurrency: (code) => set((state) => ({ wallet: { ...state.wallet, currency: code } })),
   fetchExchangeRates: async () => {
@@ -101,4 +119,6 @@ export const useAppStore = create<AppState>((set) => ({
       console.error("Failed to fetch exchange rates", error);
     }
   },
+  setAuthenticated: (val) => set({ isAuthenticated: val }),
+  addContact: (contact) => set((state) => ({ contacts: [contact, ...state.contacts] })),
 }));

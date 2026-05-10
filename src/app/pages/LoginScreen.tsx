@@ -9,9 +9,57 @@ export function LoginScreen() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const { settings, setAuthenticated } = useAppStore();
+
+  const handleBiometrics = () => {
+    setIsAuthenticating(true);
+    // Simulate biometric check
+    setTimeout(() => {
+      setIsAuthenticating(false);
+      setAuthenticated(true);
+      navigate("/home");
+    }, 2000);
+  };
 
   return (
     <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
+      {/* Biometric Simulation Overlay */}
+      {isAuthenticating && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#162456]/90 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[32px] p-8 w-full max-w-xs flex flex-col items-center text-center animate-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 relative">
+              <div className="absolute inset-0 rounded-full border-4 border-blue-100 animate-ping opacity-25" />
+              <div className="text-blue-600 animate-pulse">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12Z" />
+                  <path d="M7 12C7 9.23858 9.23858 7 12 7C14.7614 7 17 9.23858 17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12Z" />
+                  <path d="M11 12H13" />
+                  <path d="M12 11V13" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Autenticando</h3>
+            <p className="text-gray-500 text-sm mb-6">Utilizando Face ID / Impressão Digital para entrar na sua conta</p>
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-600 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }} />
+            </div>
+            <button 
+              onClick={() => setIsAuthenticating(false)}
+              className="mt-8 text-sm font-semibold text-gray-400"
+            >
+              Cancelar
+            </button>
+          </div>
+          <style>{`
+            @keyframes progress {
+              0% { width: 0% }
+              100% { width: 100% }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* Header */}
       <div
         className="flex-shrink-0 flex flex-col items-center pt-8 pb-10 px-6"
@@ -120,7 +168,10 @@ export function LoginScreen() {
           )}
 
           <button
-            onClick={() => navigate("/home")}
+            onClick={() => {
+              setAuthenticated(true);
+              navigate("/home");
+            }}
             className="w-full py-4 rounded-xl text-white shadow-lg mt-2 transition-transform active:scale-95"
             style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600, fontSize: "16px" }}
           >
@@ -135,9 +186,9 @@ export function LoginScreen() {
             </div>
           )}
 
-          {tab === "login" && (
+          {tab === "login" && settings.biometrics && (
             <button
-              onClick={() => navigate("/home")}
+              onClick={handleBiometrics}
               className="w-full py-4 rounded-xl border-2 text-sm transition-transform active:scale-95"
               style={{ borderColor: "#162456", color: "#162456", fontWeight: 600 }}
             >

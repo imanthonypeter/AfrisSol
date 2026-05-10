@@ -1,18 +1,26 @@
 import { useEffect } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { Navigation } from "./Navigation";
-import { useAppStore, AppState } from "../../store/useAppStore";
+import { useAppStore } from "../../store/useAppStore";
 
 const SHOW_NAV = ["/home", "/carteira", "/historico", "/perfil", "/pagamentos", "/recargas", "/transferencias"];
 
 export function Root() {
   const location = useLocation();
+  const navigate = useNavigate();
   const showNav = SHOW_NAV.includes(location.pathname);
-  const fetchExchangeRates = useAppStore((state: AppState) => state.fetchExchangeRates);
+  const { fetchExchangeRates, isAuthenticated } = useAppStore();
 
   useEffect(() => {
     fetchExchangeRates();
   }, [fetchExchangeRates]);
+
+  useEffect(() => {
+    // Protected routes check
+    if (!isAuthenticated && location.pathname !== "/" && location.pathname !== "/login") {
+      navigate("/login");
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
 
   return (
     <div className="min-h-screen flex bg-[#F5F7FA] font-sans text-gray-900 overflow-hidden">
