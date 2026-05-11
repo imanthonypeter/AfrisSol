@@ -9,6 +9,8 @@ import { PagamentosScreen } from "./pages/PagamentosScreen";
 import { RecargasScreen } from "./pages/RecargasScreen";
 import { HistoricoScreen } from "./pages/HistoricoScreen";
 import { PerfilScreen } from "./pages/PerfilScreen";
+import { TermsScreen } from "./pages/TermsScreen";
+import { PrivacyScreen } from "./pages/PrivacyScreen";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +26,8 @@ export const router = createBrowserRouter([
       { path: "recargas", Component: RecargasScreen },
       { path: "historico", Component: HistoricoScreen },
       { path: "perfil", Component: PerfilScreen },
+      { path: "termos", Component: TermsScreen },
+      { path: "privacidade", Component: PrivacyScreen },
     ],
   },
 ]);

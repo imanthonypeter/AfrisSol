@@ -174,6 +174,29 @@ export function PerfilScreen() {
         </div>
       ))}
 
+      {/* Legal Section */}
+      <div className="px-5 mb-8">
+        <p className="text-gray-400 text-xs font-semibold mb-3 tracking-wider">INFORMAÇÃO LEGAL</p>
+        <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+          {[
+            { label: "Termos de Uso", path: "/termos", icon: <FileText size={18} /> },
+            { label: "Política de Privacidade", path: "/privacidade", icon: <Shield size={18} /> },
+          ].map((item, i) => (
+            <button 
+              key={i}
+              onClick={() => navigate(item.path)}
+              className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
+                {item.icon}
+              </div>
+              <span className="flex-1 text-left text-sm text-gray-700 font-medium">{item.label}</span>
+              <ChevronRight size={16} color="#D1D5DB" />
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Logout */}
       <div className="px-5 mb-6">
         <button

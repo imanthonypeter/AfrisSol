@@ -178,6 +178,14 @@ export function LoginScreen() {
             {tab === "login" ? "Entrar" : "Criar conta"}
           </button>
 
+          {tab === "register" && (
+            <p className="text-center text-xs text-gray-500 mt-4 px-4 leading-relaxed">
+              Ao criar uma conta, você concorda com os nossos{" "}
+              <button onClick={() => navigate("/termos")} className="text-[#F47C20] font-semibold hover:underline">Termos de Uso</button> e{" "}
+              <button onClick={() => navigate("/privacidade")} className="text-[#F47C20] font-semibold hover:underline">Política de Privacidade</button>.
+            </p>
+          )}
+
           {tab === "login" && (
             <div className="flex items-center gap-3 my-2">
               <div className="flex-1 h-px bg-gray-200" />
@@ -197,12 +205,13 @@ export function LoginScreen() {
           )}
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6 mb-4">
+        <div className="text-center text-xs text-gray-400 mt-6 mb-8 px-6 leading-relaxed">
           Ao continuar, aceita os nossos{" "}
-          <span style={{ color: "#F47C20" }}>Termos de Uso</span> e{" "}
-          <span style={{ color: "#F47C20" }}>Privacidade</span>
-        </p>
+          <button onClick={() => navigate("/termos")} className="text-[#F47C20] font-medium hover:underline">Termos de Uso</button> e{" "}
+          <button onClick={() => navigate("/privacidade")} className="text-[#F47C20] font-medium hover:underline">Privacidade</button>
+        </div>
       </div>
     </div>
   );
 }
+
