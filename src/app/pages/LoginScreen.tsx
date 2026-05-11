@@ -45,7 +45,7 @@ export function LoginScreen() {
             <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-blue-600 rounded-full animate-[progress_2s_ease-in-out_infinite]" style={{ width: '60%' }} />
             </div>
-            <button 
+            <button
               onClick={() => setIsAuthenticating(false)}
               className="mt-8 text-sm font-semibold text-gray-400"
             >
@@ -207,7 +207,7 @@ export function LoginScreen() {
 
         <div className="text-center text-xs text-gray-400 mt-6 mb-8 px-6 leading-relaxed">
           Ao continuar, aceita os nossos{" "}
-          <button onClick={() => navigate("/termos")} className="text-[#F47C20] font-medium hover:underline">Termos de Uso</button> e{" "}
+          <button onClick={() => navigate("/terms")} className="text-[#F47C20] font-medium hover:underline">Termos de Uso</button> e{" "}
           <button onClick={() => navigate("/privacidade")} className="text-[#F47C20] font-medium hover:underline">Privacidade</button>
         </div>
       </div>
