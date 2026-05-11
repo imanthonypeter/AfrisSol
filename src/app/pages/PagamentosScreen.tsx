@@ -19,7 +19,7 @@ export function PagamentosScreen() {
   const [step, setStep] = useState<"list" | "form" | "confirm" | "success">("list");
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
-  const { wallet } = useAppStore();
+  const { wallet, updateBalance, addTransaction } = useAppStore();
 
   const selectedService = services.find((s) => s.id === selected);
 
@@ -27,6 +27,23 @@ export function PagamentosScreen() {
     if (step === "form") { setStep("list"); setSelected(null); }
     else if (step === "confirm") setStep("form");
     else if (step === "success") { setStep("list"); setAmount(""); setReference(""); setSelected(null); }
+  };
+
+  const handlePay = () => {
+    setStep("success");
+    const numAmount = parseFloat(amount);
+    if (!isNaN(numAmount) && numAmount > 0) {
+      updateBalance(-numAmount);
+      addTransaction({
+        id: Date.now(),
+        icon: selectedService?.id === "internet" ? "internet" : selectedService?.id === "electricidade" ? "electricity" : "other",
+        label: `Pagamento ${selectedService?.label}`,
+        sub: `Ref: ${reference}`,
+        amount: numAmount,
+        positive: false,
+        category: "Pagamento"
+      });
+    }
   };
 
   return (
@@ -176,7 +193,7 @@ export function PagamentosScreen() {
               Cancelar
             </button>
             <button
-              onClick={() => setStep("success")}
+              onClick={handlePay}
               className="flex-1 py-4 rounded-xl text-white text-sm"
               style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
             >

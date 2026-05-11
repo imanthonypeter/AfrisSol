@@ -7,7 +7,10 @@ import { formatCurrency, convertAmount } from "../../utils/currency";
 export function CarteiraScreen() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [copied, setCopied] = useState(false);
-  const { user, wallet, accounts } = useAppStore();
+  const { user, wallet, accounts, transactions } = useAppStore();
+
+  const totalEntradas = transactions.filter(t => t.positive).reduce((sum, t) => sum + t.amount, 0);
+  const totalSaidas = transactions.filter(t => !t.positive).reduce((sum, t) => sum + t.amount, 0);
 
   const handleCopy = () => {
     setCopied(true);
@@ -202,8 +205,8 @@ export function CarteiraScreen() {
         <h3 className="text-gray-700 mb-3" style={{ fontWeight: 600, fontSize: "14px" }}>Resumo do mês</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Entradas", value: formatCurrency(convertAmount(8500, "AOA", wallet.currency), wallet.currency), color: "#22c55e", bg: "#E8F5E9" },
-            { label: "Saídas", value: formatCurrency(convertAmount(5200, "AOA", wallet.currency), wallet.currency), color: "#EF4444", bg: "#FEF2F2" },
+            { label: "Entradas", value: formatCurrency(convertAmount(totalEntradas, "AOA", wallet.currency), wallet.currency), color: "#22c55e", bg: "#E8F5E9" },
+            { label: "Saídas", value: formatCurrency(convertAmount(totalSaidas, "AOA", wallet.currency), wallet.currency), color: "#EF4444", bg: "#FEF2F2" },
           ].map((stat) => (
             <div
               key={stat.label}

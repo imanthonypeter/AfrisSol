@@ -11,6 +11,7 @@ import { HistoricoScreen } from "./pages/HistoricoScreen";
 import { PerfilScreen } from "./pages/PerfilScreen";
 import { TermsScreen } from "./pages/TermsScreen";
 import { PrivacyScreen } from "./pages/PrivacyScreen";
+import { NotFoundScreen } from "./pages/NotFoundScreen";
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: "perfil", Component: PerfilScreen },
       { path: "termos", Component: TermsScreen },
       { path: "privacidade", Component: PrivacyScreen },
+      { path: "*", Component: NotFoundScreen },
     ],
   },
 ]);

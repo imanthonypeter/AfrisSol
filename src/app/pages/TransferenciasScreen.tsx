@@ -11,7 +11,8 @@ export function TransferenciasScreen() {
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
-  const { wallet, contacts, addContact } = useAppStore();
+  const [nota, setNota] = useState("");
+  const { wallet, contacts, addContact, updateBalance, addTransaction } = useAppStore();
 
   const handleAddContact = () => {
     if (!newName || !newPhone) return;
@@ -35,8 +36,23 @@ export function TransferenciasScreen() {
     if (amount && (recipient || selectedContact)) setStep("confirm");
   };
 
-  const handleConfirm = () => setStep("success");
-  const handleReset = () => { setStep("form"); setAmount(""); setRecipient(""); setSelectedContact(null); };
+  const handleConfirm = () => {
+    setStep("success");
+    const numAmount = parseFloat(amount);
+    if (tab === "enviar" && !isNaN(numAmount) && numAmount > 0) {
+      updateBalance(-numAmount);
+      addTransaction({
+        id: Date.now(),
+        icon: "send",
+        label: `Envio para ${selectedContact?.name || recipient || "Desconhecido"}`,
+        sub: "Agora mesmo",
+        amount: numAmount,
+        positive: false,
+        category: "Transferência"
+      });
+    }
+  };
+  const handleReset = () => { setStep("form"); setAmount(""); setRecipient(""); setSelectedContact(null); setNota(""); };
 
   return (
     <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
@@ -215,6 +231,8 @@ export function TransferenciasScreen() {
                 <input
                   className="w-full outline-none text-gray-700 bg-transparent text-sm"
                   placeholder="Adicionar uma nota..."
+                  value={nota}
+                  onChange={(e) => setNota(e.target.value)}
                 />
               </div>
 

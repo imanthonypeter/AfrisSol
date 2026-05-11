@@ -59,6 +59,7 @@ export interface AppState {
   fetchExchangeRates: () => Promise<void>;
   setAuthenticated: (val: boolean) => void;
   addContact: (contact: Contact) => void;
+  updateBalance: (amount: number) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -121,4 +122,5 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setAuthenticated: (val) => set({ isAuthenticated: val }),
   addContact: (contact) => set((state) => ({ contacts: [contact, ...state.contacts] })),
+  updateBalance: (amount) => set((state) => ({ wallet: { ...state.wallet, balance: state.wallet.balance + amount } })),
 }));

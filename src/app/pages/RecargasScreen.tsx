@@ -23,7 +23,24 @@ export function RecargasScreen() {
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
-  const { wallet } = useAppStore();
+  const { wallet, updateBalance, addTransaction } = useAppStore();
+
+  const handlePay = () => {
+    setStep("success");
+    const numAmount = parseFloat(amount);
+    if (!isNaN(numAmount) && numAmount > 0) {
+      updateBalance(-numAmount);
+      addTransaction({
+        id: Date.now(),
+        icon: "recharge",
+        label: `Recarga ${operators.find((o) => o.id === operator)?.label || "Telemóvel"}`,
+        sub: `+258 ${phone}`,
+        amount: numAmount,
+        positive: false,
+        category: "Recarga"
+      });
+    }
+  };
 
   return (
     <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
@@ -88,7 +105,7 @@ export function RecargasScreen() {
               Cancelar
             </button>
             <button
-              onClick={() => setStep("success")}
+              onClick={handlePay}
               className="flex-1 py-4 rounded-xl text-white text-sm"
               style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
             >

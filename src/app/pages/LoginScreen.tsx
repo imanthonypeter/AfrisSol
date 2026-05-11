@@ -169,10 +169,12 @@ export function LoginScreen() {
 
           <button
             onClick={() => {
+              if (!phone || !password) return;
               setAuthenticated(true);
               navigate("/home");
             }}
-            className="w-full py-4 rounded-xl text-white shadow-lg mt-2 transition-transform active:scale-95"
+            disabled={!phone || !password}
+            className={`w-full py-4 rounded-xl text-white shadow-lg mt-2 transition-transform ${(!phone || !password) ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
             style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600, fontSize: "16px" }}
           >
             {tab === "login" ? "Entrar" : "Criar conta"}
@@ -207,7 +209,7 @@ export function LoginScreen() {
 
         <div className="text-center text-xs text-gray-400 mt-6 mb-8 px-6 leading-relaxed">
           Ao continuar, aceita os nossos{" "}
-          <button onClick={() => navigate("/terms")} className="text-[#F47C20] font-medium hover:underline">Termos de Uso</button> e{" "}
+          <button onClick={() => navigate("/termos")} className="text-[#F47C20] font-medium hover:underline">Termos de Uso</button> e{" "}
           <button onClick={() => navigate("/privacidade")} className="text-[#F47C20] font-medium hover:underline">Privacidade</button>
         </div>
       </div>
