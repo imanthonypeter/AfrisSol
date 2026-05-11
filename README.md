@@ -1,44 +1,47 @@
-# 🌍 AfrisSol — A Sua Carteira Digital
+# 🌍 AfriSol — A Sua Carteira Digital
 
 <p align="center">
-  <strong>AfrisSol</strong> is a modern digital wallet application built for Mozambique, enabling secure mobile payments, transfers, bill payments, and top-ups.
+  <strong>AfrisSol</strong> é uma aplicação de carteira digital moderna desenvolvida para o mercado angolano, permitindo pagamentos móveis seguros, transferências, pagamentos de serviços e recargas.
 </p>
 
 ---
 
-## ✨ Features
+## ✨ Funcionalidades Principais
 
-| Feature | Description |
+| Funcionalidade | Descrição |
 |---------|-------------|
-| 💰 **Digital Wallet** | View balances, manage multiple accounts, track income & expenses |
-| 💳 **Virtual VISA Card** | Integrated virtual card with copy-to-clipboard card number |
-| 🔄 **Transfers** | Send & receive money via contacts, phone number, or IBAN |
-| ⚡ **Bill Payments** | Pay for electricity (EDM), water, internet, TV, insurance, education & more |
-| 📱 **Top-ups** | Recharge Vodacom, Movitel, TMcel airtime and data bundles |
-| 📊 **Transaction History** | Searchable, filterable transaction log with category badges |
-| 👤 **Profile Management** | Edit personal info, security settings, biometrics, and support access |
+| 💰 **Gestão de Carteira** | Consulta de saldos, criação e gestão dinâmica de sub-contas (cofres) e acompanhamento de receitas e despesas. |
+| 💳 **Cartão VISA Virtual** | Geração instantânea de cartões virtuais com gestão de estado e funcionalidade de cópia do número do cartão para a área de transferência. |
+| 🔄 **Transferências** | Envio e receção de dinheiro via lista de contactos, número de telefone ou IBAN de forma intuitiva. |
+| ⚡ **Pagamento de Serviços** | Integração com entidades nacionais para pagamento de energia (ENDE), água (EPAL), internet e televisão (ZAP, DSTV, TV Cabo), seguros, educação, entre outros. |
+| 📱 **Recargas** | Carregamento direto de saldo e pacotes de dados para Unitel, Africel e Movicel. |
+| 📊 **Histórico de Transações** | Registo detalhado de transações com pesquisa, filtros avançados e categorização visual. |
+| 👤 **Perfil e Segurança** | Gestão de dados pessoais, configurações de segurança, autenticação biométrica avançada e acesso ao suporte. |
+| 🔔 **Notificações em Tempo Real** | Centro de notificações animado para alertas de pagamentos, transferências e dicas de segurança. |
 
-## 🛠️ Tech Stack
+## 🛠️ Stack Tecnológica
 
 - **Framework:** [React](https://react.dev/) 19 + [TypeScript](https://www.typescriptlang.org/)
-- **Build Tool:** [Vite](https://vite.dev/) 6 with `@tailwindcss/vite`
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/) v4 + custom design tokens
-- **Routing:** [React Router](https://reactrouter.com/) v7
-- **Icons:** [Lucide React](https://lucide.dev/)
-- **UI Components:** [Radix UI](https://www.radix-ui.com/) primitives + shadcn/ui
-- **Fonts:** [Inter](https://fonts.google.com/specimen/Inter) (Google Fonts)
+- **Ferramenta de Build:** [Vite](https://vite.dev/) 6 com `@tailwindcss/vite`
+- **Estilização:** [Tailwind CSS](https://tailwindcss.com/) v4 + design tokens personalizados
+- **Gestão de Estado:** [Zustand](https://zustand-demo.pmnd.rs/) (Arquitetura atómica e global via `useAppStore`)
+- **Roteamento:** [React Router](https://reactrouter.com/) v7
+- **Animações:** [Framer Motion](https://www.framer.com/motion/) para transições de interface e micro-interações fluidas
+- **Ícones:** [Lucide React](https://lucide.dev/)
+- **Componentes de Interface:** [Radix UI](https://www.radix-ui.com/) primitives + shadcn/ui
+- **Tipografia:** [Inter](https://fonts.google.com/specimen/Inter) (Google Fonts)
 
-## 📁 Project Structure
+## 📁 Estrutura do Projeto
 
 ```
 src/
 ├── app/
-│   ├── components/       # Shared layout components (Root, BottomNav)
-│   │   ├── Root.tsx      # App shell — responsive container + nav
-│   │   ├── BottomNav.tsx # Bottom tab navigation
-│   │   ├── figma/        # Figma-exported components
-│   │   └── ui/           # shadcn/ui primitives
-│   ├── pages/            # Page-level screen components
+│   ├── components/       # Componentes de layout partilhados (Root, BottomNav)
+│   │   ├── Root.tsx      # App shell — contentor responsivo + navegação
+│   │   ├── BottomNav.tsx # Barra de navegação inferior
+│   │   ├── figma/        # Componentes exportados do Figma (Ícones/Gráficos)
+│   │   └── ui/           # Primitivas shadcn/ui
+│   ├── pages/            # Componentes correspondentes aos ecrãs principais
 │   │   ├── SplashScreen.tsx
 │   │   ├── LoginScreen.tsx
 │   │   ├── HomeScreen.tsx
@@ -48,66 +51,69 @@ src/
 │   │   ├── RecargasScreen.tsx
 │   │   ├── HistoricoScreen.tsx
 │   │   └── PerfilScreen.tsx
-│   └── routes.tsx        # Route definitions
-├── assets/               # Static assets (logos, images)
-├── styles/               # Global styles, Tailwind config, fonts
-└── main.tsx              # App entry point
+│   └── routes.tsx        # Definições de rotas da aplicação
+├── assets/               # Recursos estáticos (logótipos, imagens)
+├── store/                # Gestão de estado global (Zustand - useAppStore.ts)
+├── styles/               # Estilos globais, configuração Tailwind, fontes
+└── main.tsx              # Ponto de entrada da aplicação
 ```
 
-## 🚀 Getting Started
+## 🚀 Guia de Iniciação
 
-### Prerequisites
+### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) ≥ 18
 - npm ≥ 9
 
-### Installation
+### Instalação
 
 ```bash
-# Clone the repository
+# Clonar o repositório
 git clone https://github.com/your-username/AfriSol.git
 cd AfriSol
 
-# Install dependencies
+# Instalar as dependências
 npm install
 
-# Start the development server
+# Iniciar o servidor de desenvolvimento
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+A aplicação ficará disponível em `http://localhost:5173`.
 
-### Build for Production
+### Compilação para Produção
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## 📱 Responsive Design
+## 📱 Design Responsivo
 
-AfrisSol is designed to work seamlessly across devices:
+A aplicação AfrisSol foi arquitetada para proporcionar uma experiência fluida em todos os dispositivos:
 
-- **Mobile:** Full-screen native-like experience
-- **Desktop:** Centered app container with subtle shadow, matching a premium fintech feel
+- **Mobile:** Experiência nativa imersiva em ecrã inteiro.
+- **Desktop:** Contentor centralizado com sombras subtis, simulando a estética premium de aplicações fintech.
 
-## 🎨 Design System
+## 🎨 Design System e Identidade Visual
 
-| Token | Value |
-|-------|-------|
-| Primary Blue | `#162456` |
-| Accent Orange | `#F47C20` |
-| Background | `#F5F7FA` |
-| Success Green | `#22c55e` |
-| Error Red | `#EF4444` |
-| Font Family | Inter |
+A identidade visual transmite confiança e segurança, pilares essenciais no setor financeiro angolano.
 
-## 📄 License
+| Token | Valor Hexadecimal | Aplicação Principal |
+|-------|-------|---|
+| Azul Primário | `#162456` | Identidade da marca, cabeçalhos e botões principais |
+| Laranja Destaque | `#F47C20` | Ações de chamada (CTAs) e alertas |
+| Fundo Base | `#F5F7FA` | Fundo principal da aplicação |
+| Verde Sucesso | `#22c55e` | Confirmações e entradas financeiras |
+| Vermelho Erro | `#EF4444` | Alertas críticos e saídas financeiras |
+| Fonte Primária | `Inter` | Toda a tipografia da aplicação |
 
-This project is private. All rights reserved.
+## 📄 Licença
+
+Este projeto é privado. Todos os direitos reservados.
 
 ---
 
 <p align="center">
-  <sub>Built with ❤️ for Angola</sub>
+  <sub>Criado com ❤️ para Angola</sub>
 </p>
