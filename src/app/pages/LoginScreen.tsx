@@ -250,14 +250,6 @@ export function LoginScreen() {
               {tab === "login" ? "Entrar" : "Criar conta"}
             </button>
 
-            {tab === "register" && (
-              <p className="text-center text-xs text-gray-500 mt-4 px-4 leading-relaxed">
-                Ao criar uma conta, você concorda com os nossos{" "}
-                <button onClick={() => navigate("/termos")} className="text-[#F47C20] font-semibold hover:underline">Termos de Uso</button> e{" "}
-                <button onClick={() => navigate("/privacidade")} className="text-[#F47C20] font-semibold hover:underline">Política de Privacidade</button>.
-              </p>
-            )}
-
             {tab === "login" && (
               <div className="flex items-center gap-3 my-2">
                 <div className="flex-1 h-px bg-gray-200" />
@@ -278,10 +270,10 @@ export function LoginScreen() {
             )}
           </div>
 
-          <div className="text-center text-xs text-gray-400 mt-6 mb-8 px-6 leading-relaxed">
-            Ao continuar, aceita os nossos{" "}
-            <button onClick={() => navigate("/termos")} className="text-[#F47C20] font-medium hover:underline">Termos de Uso</button> e{" "}
-            <button onClick={() => navigate("/privacidade")} className="text-[#F47C20] font-medium hover:underline">Privacidade</button>
+          <div className="text-center text-xs text-gray-500 mt-8 mb-8 px-6 leading-relaxed">
+            Ao {tab === "login" ? "continuar" : "criar uma conta"}, aceita os nossos{" "}
+            <span onClick={() => navigate("/termos")} className="text-[#F47C20] font-semibold hover:underline cursor-pointer">Termos de Uso</span> e{" "}
+            <span onClick={() => navigate("/privacidade")} className="text-[#F47C20] font-semibold hover:underline cursor-pointer">Política de Privacidade</span>.
           </div>
         </div>
       </div>
