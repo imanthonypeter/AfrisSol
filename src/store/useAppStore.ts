@@ -43,7 +43,8 @@ export interface AppState {
   settings: Settings;
   wallet: {
     balance: number;
-    currency: string; // currency code like "AOA", "USD", etc.
+    currency: string;
+    hasVirtualCard: boolean;
   };
   transactions: Transaction[];
   accounts: Account[];
@@ -60,6 +61,8 @@ export interface AppState {
   setAuthenticated: (val: boolean) => void;
   addContact: (contact: Contact) => void;
   updateBalance: (amount: number) => void;
+  createVirtualCard: () => void;
+  addAccount: (account: Account, initialTransfer: number) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -77,6 +80,7 @@ export const useAppStore = create<AppState>((set) => ({
   wallet: {
     balance: 10000,
     currency: "AOA",
+    hasVirtualCard: false,
   },
   transactions: [
     { id: 1, icon: "receive", label: "Recebimento de Maria", sub: "Hoje, 10:45", amount: 2500, positive: true, category: "Transferência" },
@@ -97,10 +101,10 @@ export const useAppStore = create<AppState>((set) => ({
     { label: "Poupança", num: "AO 9876 5432 1098", balance: 0, color: "#F47C20" },
   ],
   contacts: [
-    { id: 1, name: "Maria Santos", phone: "+258 84 123 4567", initials: "MS", color: "#6366f1" },
-    { id: 2, name: "Carlos Moçambique", phone: "+258 86 987 6543", initials: "CM", color: "#F47C20" },
-    { id: 3, name: "Fatima Nhavene", phone: "+258 82 555 0123", initials: "FN", color: "#22c55e" },
-    { id: 4, name: "Pedro Macuácua", phone: "+258 84 888 7654", initials: "PM", color: "#ec4899" },
+    { id: 1, name: "Maria Santos", phone: "+244 923 123 456", initials: "MS", color: "#6366f1" },
+    { id: 2, name: "Carlos Ndongo", phone: "+244 926 987 654", initials: "CN", color: "#F47C20" },
+    { id: 3, name: "Fatima Kuzela", phone: "+244 912 555 012", initials: "FK", color: "#22c55e" },
+    { id: 4, name: "Pedro Lukamba", phone: "+244 923 888 765", initials: "PL", color: "#ec4899" },
   ],
   exchangeRates: null,
   isAuthenticated: false,
@@ -123,4 +127,21 @@ export const useAppStore = create<AppState>((set) => ({
   setAuthenticated: (val) => set({ isAuthenticated: val }),
   addContact: (contact) => set((state) => ({ contacts: [contact, ...state.contacts] })),
   updateBalance: (amount) => set((state) => ({ wallet: { ...state.wallet, balance: state.wallet.balance + amount } })),
+  createVirtualCard: () => set((state) => ({ wallet: { ...state.wallet, hasVirtualCard: true } })),
+  addAccount: (account, initialTransfer) => set((state) => {
+    const newTransaction: Transaction = {
+      id: Date.now(),
+      icon: "send",
+      label: `Transferência para ${account.label}`,
+      sub: "Hoje, agora mesmo",
+      amount: initialTransfer,
+      positive: false,
+      category: "Transferência",
+    };
+    return {
+      accounts: [...state.accounts, account],
+      wallet: { ...state.wallet, balance: state.wallet.balance - initialTransfer },
+      transactions: [newTransaction, ...state.transactions],
+    };
+  }),
 }));

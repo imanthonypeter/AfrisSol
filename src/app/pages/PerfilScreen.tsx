@@ -8,6 +8,7 @@ import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
 
 import { CurrencySelector } from "../components/CurrencySelector";
+import { AnimatedLayout } from "../../components/AnimatedLayout";
 export function PerfilScreen() {
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
@@ -48,7 +49,7 @@ export function PerfilScreen() {
   ];
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
+    <AnimatedLayout className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
       {/* Header */}
       <div
         className="flex-shrink-0 px-5 pt-3 pb-8"
@@ -219,6 +220,6 @@ export function PerfilScreen() {
         isOpen={showCurrencySelector} 
         onClose={() => setShowCurrencySelector(false)} 
       />
-    </div>
+    </AnimatedLayout>
   );
 }

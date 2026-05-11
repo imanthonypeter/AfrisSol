@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { ArrowUpRight, ArrowDownLeft, Search, ChevronRight, Check, Plus, UserPlus, X } from "lucide-react";
 import { useAppStore, Contact } from "../../store/useAppStore";
-
+import { AnimatedLayout } from "../../components/AnimatedLayout";
+import { SuccessCheckmark } from "../../components/SuccessCheckmark";
+import { motion, AnimatePresence } from "framer-motion";
 export function TransferenciasScreen() {
   const [tab, setTab] = useState<"enviar" | "receber">("enviar");
   const [amount, setAmount] = useState("");
@@ -55,7 +57,7 @@ export function TransferenciasScreen() {
   const handleReset = () => { setStep("form"); setAmount(""); setRecipient(""); setSelectedContact(null); setNota(""); };
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
+    <AnimatedLayout className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
       {/* Header */}
       <div
         className="flex-shrink-0 px-5 pt-3 pb-6"
@@ -85,11 +87,8 @@ export function TransferenciasScreen() {
 
       {step === "success" ? (
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
-            style={{ background: "#E8F5E9" }}
-          >
-            <Check size={36} color="#22c55e" strokeWidth={2.5} />
+          <div className="mb-4">
+            <SuccessCheckmark size={80} color="#22c55e" />
           </div>
           <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>
             {tab === "enviar" ? "Transferência enviada!" : "Pedido enviado!"}
@@ -270,8 +269,8 @@ export function TransferenciasScreen() {
                 <p className="text-gray-500 text-xs mb-4" style={{ fontWeight: 500 }}>OS MEUS DADOS</p>
                 {[
                   { label: "Nome", value: "João Macuácua" },
-                  { label: "Telemóvel", value: "+258 84 XXX XXXX" },
-                  { label: "IBAN", value: "MZ 1234 5678 9012" },
+                  { label: "Telemóvel", value: "+244 923 XXX XXX" },
+                  { label: "IBAN", value: "AO 1234 5678 9012" },
                 ].map((row) => (
                   <div key={row.label} className="flex justify-between py-2.5 border-b border-gray-50 last:border-0">
                     <span className="text-gray-500 text-sm">{row.label}</span>
@@ -318,9 +317,23 @@ export function TransferenciasScreen() {
         </div>
       )}
       {/* Add Contact Modal */}
-      {isAddingContact && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+      <AnimatePresence>
+        {isAddingContact && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}
+          >
+            <motion.div
+              className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl"
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 10 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-gray-800 font-bold text-lg">Novo Destinatário</h3>
               <button onClick={() => setIsAddingContact(false)} className="text-gray-400 hover:text-gray-600">
@@ -361,9 +374,10 @@ export function TransferenciasScreen() {
             >
               Salvar Destinatário
             </button>
-          </div>
-        </div>
-      )}
-    </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </AnimatedLayout>
   );
 }

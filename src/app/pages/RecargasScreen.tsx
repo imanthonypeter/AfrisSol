@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Smartphone, Tv, Wifi, Car, Check, ChevronRight } from "lucide-react";
+import { Smartphone, Tv, Wifi, Car, ChevronRight } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
-
+import { AnimatedLayout } from "../../components/AnimatedLayout";
+import { SuccessCheckmark } from "../../components/SuccessCheckmark";
+import { motion } from "framer-motion";
 const operators = [
-  { id: "vodacom", label: "Vodacom", color: "#e53e3e", initials: "V" },
-  { id: "movitel", label: "Movitel", color: "#F47C20", initials: "M" },
-  { id: "tmcel", label: "TMcel", color: "#162456", initials: "T" },
+  { id: "unitel", label: "Unitel", color: "#F47C20", initials: "U" },
+  { id: "movicel", label: "Movicel", color: "#e53e3e", initials: "M" },
+  { id: "africel", label: "Africel", color: "#162456", initials: "A" },
 ];
 
 const amounts = ["50", "100", "200", "300", "500", "1000"];
@@ -34,7 +36,7 @@ export function RecargasScreen() {
         id: Date.now(),
         icon: "recharge",
         label: `Recarga ${operators.find((o) => o.id === operator)?.label || "Telemóvel"}`,
-        sub: `+258 ${phone}`,
+        sub: `+244 ${phone}`,
         amount: numAmount,
         positive: false,
         category: "Recarga"
@@ -43,7 +45,7 @@ export function RecargasScreen() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
+    <AnimatedLayout className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
       {/* Header */}
       <div
         className="flex-shrink-0 px-5 pt-3 pb-6"
@@ -65,11 +67,11 @@ export function RecargasScreen() {
 
       {step === "success" ? (
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ background: "#E8F5E9" }}>
-            <Check size={36} color="#22c55e" strokeWidth={2.5} />
+          <div className="mb-4">
+            <SuccessCheckmark size={80} color="#22c55e" />
           </div>
           <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>Recarga efectuada!</h2>
-          <p className="text-gray-500 text-sm text-center mb-2">{amount} {wallet.currency} carregados em +258 {phone}</p>
+          <p className="text-gray-500 text-sm text-center mb-2">{amount} {wallet.currency} carregados em +244 {phone}</p>
           <p className="text-gray-400 text-xs mb-8">Referência: #REC20240501</p>
           <button
             onClick={() => { setStep("form"); setAmount(""); setPhone(""); }}
@@ -85,7 +87,7 @@ export function RecargasScreen() {
             <h3 className="text-gray-700 mb-4" style={{ fontWeight: 600 }}>Confirmar recarga</h3>
             {[
               { label: "Operadora", value: operators.find((o) => o.id === operator)?.label || "" },
-              { label: "Número", value: `+258 ${phone}` },
+              { label: "Número", value: `+244 ${phone}` },
               { label: "Valor", value: `${amount} ${wallet.currency}` },
               { label: "Bónus", value: `0 ${wallet.currency}` },
               { label: "Total", value: `${amount} ${wallet.currency}` },
@@ -116,10 +118,27 @@ export function RecargasScreen() {
       ) : (
         <div className="px-5 py-5">
           {/* Categories */}
-          <div className="grid grid-cols-4 gap-2 mb-5">
+          <motion.div 
+            className="grid grid-cols-4 gap-2 mb-5"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.05 }
+              }
+            }}
+          >
             {categories.map((cat) => (
-              <button
+              <motion.button
                 key={cat.id}
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setCategory(cat.id)}
                 className="flex flex-col items-center gap-2 p-2.5 rounded-xl transition-all"
                 style={{
@@ -132,9 +151,9 @@ export function RecargasScreen() {
                 <span className="text-gray-600 text-xs text-center leading-tight" style={{ fontWeight: 500 }}>
                   {cat.label}
                 </span>
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
 
           {category === "telemovel" && (
             <>
@@ -173,11 +192,11 @@ export function RecargasScreen() {
               <div className="bg-white rounded-2xl p-4 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
                 <p className="text-gray-500 text-xs mb-2" style={{ fontWeight: 500 }}>NÚMERO DE TELEMÓVEL</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-sm">+258</span>
+                  <span className="text-gray-400 text-sm">+244</span>
                   <div className="w-px h-5 bg-gray-200" />
                   <input
                     className="flex-1 outline-none text-gray-800 text-lg bg-transparent"
-                    placeholder="84 XXX XXXX"
+                    placeholder="923 XXX XXX"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     style={{ fontWeight: 600 }}
@@ -249,6 +268,6 @@ export function RecargasScreen() {
           </button>
         </div>
       )}
-    </div>
+    </AnimatedLayout>
   );
 }

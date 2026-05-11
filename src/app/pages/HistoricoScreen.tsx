@@ -3,6 +3,7 @@ import { ArrowUpRight, ArrowDownLeft, Zap, Wifi, Smartphone, Search, Filter } fr
 
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
+import { AnimatedLayout } from "../../components/AnimatedLayout";
 
 function TxIcon({ icon }: { icon: string }) {
   const base = "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0";
@@ -31,7 +32,7 @@ export function HistoricoScreen() {
   const totalOut = transactions.filter((t) => !t.positive).reduce((acc, t) => acc + t.amount, 0);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden" style={{ background: "#F5F7FA" }}>
+    <AnimatedLayout className="h-full flex flex-col overflow-hidden" style={{ background: "#F5F7FA" }}>
       {/* Header */}
       <div
         className="flex-shrink-0 px-5 pt-3 pb-5"
@@ -132,6 +133,6 @@ export function HistoricoScreen() {
           )}
         </div>
       </div>
-    </div>
+    </AnimatedLayout>
   );
 }

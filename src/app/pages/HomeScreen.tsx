@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   Bell, Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Zap, MoreHorizontal,
-  TrendingUp, Wifi, ChevronRight
+  TrendingUp, Wifi, ChevronRight, X, Info
 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
+import { AnimatedLayout } from "../../components/AnimatedLayout";
+import { motion, AnimatePresence } from "framer-motion";
 function TxIcon({ icon }: { icon: string }) {
   const base = "w-10 h-10 rounded-full flex items-center justify-center";
   if (icon === "receive") return <div className={base} style={{ background: "#E8F5E9" }}><ArrowDownLeft size={18} color="#22c55e" /></div>;
@@ -20,10 +22,11 @@ function TxIcon({ icon }: { icon: string }) {
 export function HomeScreen() {
   const navigate = useNavigate();
   const [balanceVisible, setBalanceVisible] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
   const { user, wallet, transactions } = useAppStore();
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
+    <AnimatedLayout className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
       {/* Header */}
       <div
         className="flex-shrink-0 px-5 pt-3 pb-8"
@@ -39,9 +42,12 @@ export function HomeScreen() {
               <p className="text-white text-sm" style={{ fontWeight: 600 }}>Bem-vindo à sua carteira</p>
             </div>
           </div>
-          <button className="relative w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+          <button 
+            onClick={() => setShowNotifications(true)}
+            className="relative w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+          >
             <Bell size={18} color="white" />
-            <div className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ background: "#F47C20" }} />
+            <div className="absolute top-1 right-1 w-2 h-2 rounded-full border border-[#162456]" style={{ background: "#F47C20" }} />
           </button>
         </div>
 
@@ -89,15 +95,29 @@ export function HomeScreen() {
           className="rounded-2xl p-4 bg-white shadow-md"
           style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
         >
-          <div className="grid grid-cols-4 gap-2">
+          <motion.div 
+            className="grid grid-cols-4 gap-2"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1, transition: { staggerChildren: 0.06 } }
+            }}
+          >
             {[
               { icon: <ArrowUpRight size={20} color="#F47C20" />, label: "Enviar", path: "/transferencias", bg: "#FFF3E0" },
               { icon: <ArrowDownLeft size={20} color="#22c55e" />, label: "Receber", path: "/transferencias", bg: "#E8F5E9" },
               { icon: <Zap size={20} color="#162456" />, label: "Pagar", path: "/pagamentos", bg: "#EEF2FF" },
               { icon: <MoreHorizontal size={20} color="#6366f1" />, label: "Mais", path: "/recargas", bg: "#F3F4F6" },
             ].map((item) => (
-              <button
+              <motion.button
                 key={item.label}
+                variants={{
+                  hidden: { opacity: 0, y: 12 },
+                  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+                }}
+                whileHover={{ scale: 1.08, y: -3 }}
+                whileTap={{ scale: 0.93 }}
                 onClick={() => navigate(item.path)}
                 className="flex flex-col items-center gap-2"
               >
@@ -108,9 +128,9 @@ export function HomeScreen() {
                   {item.icon}
                 </div>
                 <span className="text-xs text-gray-600" style={{ fontWeight: 500 }}>{item.label}</span>
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -171,6 +191,85 @@ export function HomeScreen() {
           ))}
         </div>
       </div>
-    </div>
+
+      {/* Notifications Modal */}
+      <AnimatePresence>
+        {showNotifications && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNotifications(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 flex flex-col max-h-[85vh]"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <Bell size={20} className="text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#162456]">Notificações</h3>
+                    <p className="text-xs text-gray-500">2 novas mensagens</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowNotifications(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-5">
+                <div className="space-y-4">
+                  <div className="bg-orange-50 rounded-xl p-4 flex gap-4 relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F47C20]" />
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
+                      <Zap size={18} className="text-[#F47C20]" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-1">Pagamento da Luz (ENDE) aprovado!</h4>
+                      <p className="text-xs text-gray-600 leading-relaxed">O seu pagamento de 5.000 AOA para a ENDE foi processado com sucesso. O seu código de recarga é: 4567-8901-2345.</p>
+                      <span className="text-[10px] text-gray-400 mt-2 block font-medium">Há 10 minutos</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-indigo-50 rounded-xl p-4 flex gap-4 relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
+                      <ArrowDownLeft size={18} className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-1">Transferência Recebida</h4>
+                      <p className="text-xs text-gray-600 leading-relaxed">O João enviou 15.000 AOA para a sua conta via AfriSol. O seu novo saldo já está atualizado.</p>
+                      <span className="text-[10px] text-gray-400 mt-2 block font-medium">Há 2 horas</span>
+                    </div>
+                  </div>
+                  
+                  <div className="border border-gray-100 rounded-xl p-4 flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center shadow-sm flex-shrink-0">
+                      <Info size={18} className="text-gray-400" />
+                    </div>
+                    <div className="opacity-70">
+                      <h4 className="text-sm font-semibold text-gray-600 mb-1">Dica de Segurança</h4>
+                      <p className="text-xs text-gray-500 leading-relaxed">Ative a autenticação biométrica nas Definições de Perfil para aprovar pagamentos mais rapidamente.</p>
+                      <span className="text-[10px] text-gray-400 mt-2 block font-medium">Ontem, 14:30</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </AnimatedLayout>
   );
 }
