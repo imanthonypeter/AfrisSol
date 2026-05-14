@@ -1,24 +1,103 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Eye, EyeOff, Phone, Fingerprint, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Phone, Fingerprint, ShieldCheck, Mail, User, Loader2 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion, AnimatePresence } from "framer-motion";
+import { registerUser, loginUser } from "../../services/auth";
 
-export function LoginScreen() {
+// Chave para guardar o email no localStorage
+const REMEMBER_KEY = "afrisol_remember_email";
+
+export function AuthScreen() {
   const navigate = useNavigate();
   const [showPass, setShowPass] = useState(false);
   const [tab, setTab] = useState<"login" | "register">("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [bioPhase, setBioPhase] = useState<"idle" | "scanning" | "success">("idle");
-  const { settings, setAuthenticated } = useAppStore();
+  const { settings, setAuthenticated, updateUser } = useAppStore();
 
+  // Ao montar, verificar se há um email guardado no localStorage
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(REMEMBER_KEY);
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  const handleSubmit = async () => {
+    if (loading) return;
+    setError("");
+    setLoading(true);
+
+    try {
+      if (tab === "register") {
+        if (!name || !email || !password) {
+          setError("Preencha todos os campos obrigatórios.");
+          setLoading(false);
+          return;
+        }
+        const { profile } = await registerUser(name, email, password, phone || undefined);
+        updateUser({
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+        });
+      } else {
+        if (!email || !password) {
+          setError("Introduza o email e a palavra-passe.");
+          setLoading(false);
+          return;
+        }
+        const { profile } = await loginUser(email, password);
+        if (profile) {
+          updateUser({
+            name: profile.name,
+            email: profile.email,
+            phone: profile.phone,
+          });
+        }
+      }
+
+      // Guardar ou remover email conforme a opção "Lembrar-me"
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_KEY, email);
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+      }
+
+      setAuthenticated(true);
+      navigate("/home");
+    } catch (err: any) {
+      const code = err?.code || "";
+      if (code === "auth/email-already-in-use") {
+        setError("Este email já está registado.");
+      } else if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+        setError("Email ou palavra-passe incorrectos.");
+      } else if (code === "auth/weak-password") {
+        setError("A palavra-passe deve ter pelo menos 6 caracteres.");
+      } else if (code === "auth/invalid-email") {
+        setError("O email introduzido é inválido.");
+      } else {
+        setError(err?.message || "Erro ao processar. Tente novamente.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Simular autenticação biométrica
   const handleBiometrics = () => {
     setBioPhase("scanning");
-    // Phase 1: scanning (2s) → Phase 2: success (1.5s) → navigate
     setTimeout(() => {
       setBioPhase("success");
       setTimeout(() => {
@@ -28,13 +107,13 @@ export function LoginScreen() {
     }, 2000);
   };
 
-  // Cancel biometrics
+  // Cancelar biometria
   const cancelBio = () => setBioPhase("idle");
 
   return (
     <AnimatedLayout>
       <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
-        {/* Biometric Authentication Overlay */}
+        {/* Sobreposição de autenticação biométrica */}
         <AnimatePresence>
           {bioPhase !== "idle" && (
             <motion.div
@@ -54,16 +133,16 @@ export function LoginScreen() {
               >
                 {bioPhase === "scanning" ? (
                   <>
-                    {/* Fingerprint scanning animation */}
+                    {/* Animação de leitura biométrica */}
                     <div className="relative w-24 h-24 mb-6">
-                      {/* Pulsing ring */}
+                      {/* Anel pulsante */}
                       <motion.div
                         className="absolute inset-0 rounded-full"
                         style={{ border: "3px solid rgba(244,124,32,0.3)" }}
                         animate={{ scale: [1, 1.25, 1], opacity: [0.6, 0, 0.6] }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                       />
-                      {/* Scanning ring */}
+                      {/* Anel rotativo */}
                       <motion.div
                         className="absolute inset-0 rounded-full"
                         style={{ border: "3px solid #F47C20" }}
@@ -72,7 +151,7 @@ export function LoginScreen() {
                       >
                         <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#F47C20]" />
                       </motion.div>
-                      {/* Fingerprint icon */}
+                      {/* Ícone de impressão digital */}
                       <motion.div
                         className="absolute inset-0 flex items-center justify-center"
                         animate={{ opacity: [0.5, 1, 0.5] }}
@@ -85,7 +164,7 @@ export function LoginScreen() {
                     <p className="text-gray-500 text-sm mb-6">
                       Toque no sensor de impressão digital ou olhe para a câmara
                     </p>
-                    {/* Progress bar */}
+                    {/* Barra de progresso */}
                     <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-6">
                       <motion.div
                         className="h-full rounded-full"
@@ -104,7 +183,7 @@ export function LoginScreen() {
                   </>
                 ) : (
                   <>
-                    {/* Success state */}
+                    {/* Estado de sucesso */}
                     <motion.div
                       className="mb-4"
                       initial={{ scale: 0 }}
@@ -131,7 +210,7 @@ export function LoginScreen() {
           )}
         </AnimatePresence>
 
-        {/* Header */}
+        {/* Cabeçalho */}
         <div
           className="flex-shrink-0 flex flex-col items-center pt-8 pb-10 px-6"
           style={{ background: "linear-gradient(160deg, #162456 0%, #1a2e6e 100%)", borderRadius: "0 0 32px 32px" }}
@@ -151,12 +230,12 @@ export function LoginScreen() {
           <p className="text-white/70 text-sm mt-3">Seguro, rápido e feito para si.</p>
         </div>
 
-        {/* Content wrapper for desktop centering */}
+        {/* Área de conteúdo centrada para desktop */}
         <div className="flex-1 flex flex-col max-w-md w-full mx-auto">
-          {/* Tabs */}
+          {/* Separadores */}
           <div className="flex mx-6 mt-6 rounded-xl overflow-hidden border border-gray-200 bg-white">
             <button
-              onClick={() => setTab("login")}
+              onClick={() => { setTab("login"); setError(""); }}
               className="flex-1 py-3 text-sm transition-all"
               style={{
                 background: tab === "login" ? "#162456" : "white",
@@ -167,7 +246,7 @@ export function LoginScreen() {
               Entrar
             </button>
             <button
-              onClick={() => setTab("register")}
+              onClick={() => { setTab("register"); setError(""); }}
               className="flex-1 py-3 text-sm transition-all"
               style={{
                 background: tab === "register" ? "#162456" : "white",
@@ -179,38 +258,83 @@ export function LoginScreen() {
             </button>
           </div>
 
-          {/* Form */}
+          {/* Mensagem de erro */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                className="mx-6 mt-4 px-4 py-3 rounded-xl text-sm font-medium"
+                style={{ background: "#FEE2E2", color: "#DC2626" }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Formulário */}
           <div className="px-6 mt-6 flex flex-col gap-4">
+            {/* Campo: Nome completo (apenas no registo) */}
             {tab === "register" && (
               <div>
                 <label className="text-sm text-gray-600 mb-1.5 block" style={{ fontWeight: 500 }}>Nome completo</label>
-                <input
-                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-800 outline-none focus:border-blue-600 transition-colors"
-                  placeholder="João Macuácua"
-                  style={{ fontSize: "15px" }}
-                />
+                <div className="relative">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                    <User size={16} color="#9CA3AF" />
+                  </div>
+                  <input
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-800 outline-none focus:border-blue-600 transition-colors"
+                    placeholder="João Macuácua"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    style={{ fontSize: "15px" }}
+                  />
+                </div>
               </div>
             )}
 
+            {/* Campo: Email */}
             <div>
-              <label className="text-sm text-gray-600 mb-1.5 block" style={{ fontWeight: 500 }}>Número de telemóvel</label>
+              <label className="text-sm text-gray-600 mb-1.5 block" style={{ fontWeight: 500 }}>Email</label>
               <div className="relative">
                 <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                  <Phone size={16} color="#9CA3AF" />
+                  <Mail size={16} color="#9CA3AF" />
                 </div>
                 <input
-                  type="tel"
+                  type="email"
                   className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-800 outline-none focus:border-blue-600 transition-colors"
-                  placeholder="Ex: 923 000 000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="exemplo@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   style={{ fontSize: "15px" }}
                 />
               </div>
             </div>
 
+            {/* Campo: Telemóvel (apenas no registo, opcional) */}
+            {tab === "register" && (
+              <div>
+                <label className="text-sm text-gray-600 mb-1.5 block" style={{ fontWeight: 500 }}>Telemóvel <span className="text-gray-400">(opcional)</span></label>
+                <div className="relative">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                    <Phone size={16} color="#9CA3AF" />
+                  </div>
+                  <input
+                    type="tel"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-800 outline-none focus:border-blue-600 transition-colors"
+                    placeholder="Ex: 923 000 000"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    style={{ fontSize: "15px" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Campo: Palavra-passe com botão de mostrar/ocultar */}
             <div>
-              <label className="text-sm text-gray-600 mb-1.5 block" style={{ fontWeight: 500 }}>PIN / Palavra-passe</label>
+              <label className="text-sm text-gray-600 mb-1.5 block" style={{ fontWeight: 500 }}>Palavra-passe</label>
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
@@ -218,38 +342,72 @@ export function LoginScreen() {
                   placeholder="••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
                   style={{ fontSize: "15px" }}
                 />
+                {/* Botão de alternar visibilidade da palavra-passe */}
                 <button
-                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
                   onClick={() => setShowPass(!showPass)}
+                  aria-label={showPass ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
                 >
-                  {showPass ? <EyeOff size={18} color="#9CA3AF" /> : <Eye size={18} color="#9CA3AF" />}
+                  {showPass ? <EyeOff size={18} color="#6B7280" /> : <Eye size={18} color="#9CA3AF" />}
                 </button>
               </div>
             </div>
 
+            {/* Linha: Lembrar-me + Esqueceu a palavra-passe (apenas no login) */}
             {tab === "login" && (
-              <div className="text-right">
+              <div className="flex items-center justify-between">
+                {/* Botão Lembrar-me */}
+                <button
+                  type="button"
+                  className="flex items-center gap-2 group"
+                  onClick={() => setRememberMe(!rememberMe)}
+                >
+                  <div
+                    className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
+                    style={{
+                      borderColor: rememberMe ? "#F47C20" : "#D1D5DB",
+                      background: rememberMe ? "#F47C20" : "transparent",
+                    }}
+                  >
+                    {rememberMe && (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors" style={{ fontWeight: 500 }}>
+                    Lembrar-me
+                  </span>
+                </button>
+
                 <button className="text-sm" style={{ color: "#F47C20", fontWeight: 500 }}>
-                  Esqueceu o PIN?
+                  Esqueceu a palavra-passe?
                 </button>
               </div>
             )}
 
+            {/* Botão principal */}
             <button
-              onClick={() => {
-                if (!phone || !password) return;
-                setAuthenticated(true);
-                navigate("/home");
-              }}
-              disabled={!phone || !password}
-              className={`w-full py-4 rounded-xl text-white shadow-lg mt-2 transition-transform ${(!phone || !password) ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`w-full py-4 rounded-xl text-white shadow-lg mt-2 transition-all flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-wait' : 'active:scale-95'}`}
               style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600, fontSize: "16px" }}
             >
-              {tab === "login" ? "Entrar" : "Criar conta"}
+              {loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  A processar...
+                </>
+              ) : (
+                tab === "login" ? "Entrar" : "Criar conta"
+              )}
             </button>
 
+            {/* Divisor */}
             {tab === "login" && (
               <div className="flex items-center gap-3 my-2">
                 <div className="flex-1 h-px bg-gray-200" />
@@ -258,6 +416,7 @@ export function LoginScreen() {
               </div>
             )}
 
+            {/* Botão biométrico (apenas se activado nas definições) */}
             {tab === "login" && settings.biometrics && (
               <button
                 onClick={handleBiometrics}
@@ -270,6 +429,7 @@ export function LoginScreen() {
             )}
           </div>
 
+          {/* Rodapé legal */}
           <div className="text-center text-xs text-gray-500 mt-8 mb-8 px-6 leading-relaxed">
             Ao {tab === "login" ? "continuar" : "criar uma conta"}, aceita os nossos{" "}
             <span onClick={() => navigate("/termos")} className="text-[#F47C20] font-semibold hover:underline cursor-pointer">Termos de Uso</span> e{" "}

@@ -5,11 +5,13 @@ import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion } from "framer-motion";
 const services = [
+  { id: "unitelmoney", icon: <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Unitel_Angola.svg" alt="Unitel Money" className="w-8 h-8 object-contain" />, label: "Unitel Money", provider: "Unitel", color: "#F47C20", bg: "#FFF3E0" },
+  { id: "afrimoney", icon: <img src="https://upload.wikimedia.org/wikipedia/commons/e/ec/Africell_Logo.png" alt="Afrimoney" className="w-8 h-8 object-contain" />, label: "Afrimoney", provider: "Africell", color: "#E00075", bg: "#FCE4EC" },
+  { id: "dstv", icon: <img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/DStv_Logo_2012.svg" alt="DStv" className="w-8 h-8 object-contain" />, label: "DStv", provider: "Multichoice Angola", color: "#162456", bg: "#EFF6FF" },
   { id: "electricidade", icon: <Zap size={22} />, label: "Electricidade", provider: "ENDE", color: "#F47C20", bg: "#FFF3E0" },
   { id: "agua", icon: <Droplets size={22} />, label: "Água", provider: "EPAL", color: "#3b82f6", bg: "#EFF6FF" },
   { id: "internet", icon: <Wifi size={22} />, label: "Internet", provider: "Unitel, Angola Telecom", color: "#6366f1", bg: "#EEF2FF" },
   { id: "tv", icon: <Tv size={22} />, label: "TV Cabo", provider: "TV Cabo, ZAP", color: "#8b5cf6", bg: "#F5F3FF" },
-  { id: "dstv", icon: <Tv size={22} />, label: "DStv", provider: "Multichoice Angola", color: "#162456", bg: "#EFF6FF" },
   { id: "telefone", icon: <Phone size={22} />, label: "Telefone Fixo", provider: "Angola Telecom", color: "#22c55e", bg: "#E8F5E9" },
   { id: "seguro", icon: <Heart size={22} />, label: "Seguros", provider: "ENSA, AAA Seguros", color: "#ef4444", bg: "#FEF2F2" },
   { id: "educacao", icon: <GraduationCap size={22} />, label: "Educação", provider: "Propinas, Mensalidades", color: "#F47C20", bg: "#FFF3E0" },

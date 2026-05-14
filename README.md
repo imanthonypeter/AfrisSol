@@ -31,33 +31,6 @@
 - **Componentes de Interface:** [Radix UI](https://www.radix-ui.com/) primitives + shadcn/ui
 - **Tipografia:** [Inter](https://fonts.google.com/specimen/Inter) (Google Fonts)
 
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── app/
-│   ├── components/       # Componentes de layout partilhados (Root, BottomNav)
-│   │   ├── Root.tsx      # App shell — contentor responsivo + navegação
-│   │   ├── BottomNav.tsx # Barra de navegação inferior
-│   │   ├── figma/        # Componentes exportados do Figma (Ícones/Gráficos)
-│   │   └── ui/           # Primitivas shadcn/ui
-│   ├── pages/            # Componentes correspondentes aos ecrãs principais
-│   │   ├── SplashScreen.tsx
-│   │   ├── LoginScreen.tsx
-│   │   ├── HomeScreen.tsx
-│   │   ├── CarteiraScreen.tsx
-│   │   ├── TransferenciasScreen.tsx
-│   │   ├── PagamentosScreen.tsx
-│   │   ├── RecargasScreen.tsx
-│   │   ├── HistoricoScreen.tsx
-│   │   └── PerfilScreen.tsx
-│   └── routes.tsx        # Definições de rotas da aplicação
-├── assets/               # Recursos estáticos (logótipos, imagens)
-├── store/                # Gestão de estado global (Zustand - useAppStore.ts)
-├── styles/               # Estilos globais, configuração Tailwind, fontes
-└── main.tsx              # Ponto de entrada da aplicação
-```
-
 ## 🚀 Guia de Iniciação
 
 ### Pré-requisitos
@@ -69,7 +42,7 @@ src/
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/your-username/AfriSol.git
+git clone https://github.com/imanthonypeter/AfriSol.git
 cd AfriSol
 
 # Instalar as dependências

@@ -17,8 +17,8 @@ export function Root() {
 
   useEffect(() => {
     // Protected routes check
-    if (!isAuthenticated && location.pathname !== "/" && location.pathname !== "/login") {
-      navigate("/login");
+    if (!isAuthenticated && location.pathname !== "/" && location.pathname !== "/auth" && location.pathname !== "/termos" && location.pathname !== "/privacidade") {
+      navigate("/auth");
     }
   }, [isAuthenticated, location.pathname, navigate]);
 

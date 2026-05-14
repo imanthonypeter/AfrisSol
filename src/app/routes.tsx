@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Root } from "./components/Root";
 import { SplashScreen } from "./pages/SplashScreen";
-import { LoginScreen } from "./pages/LoginScreen";
+import { AuthScreen } from "./pages/AuthScreen";
 import { HomeScreen } from "./pages/HomeScreen";
 import { CarteiraScreen } from "./pages/CarteiraScreen";
 import { TransferenciasScreen } from "./pages/TransferenciasScreen";
@@ -19,7 +19,7 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: SplashScreen },
-      { path: "login", Component: LoginScreen },
+      { path: "auth", Component: AuthScreen },
       { path: "home", Component: HomeScreen },
       { path: "carteira", Component: CarteiraScreen },
       { path: "transferencias", Component: TransferenciasScreen },
