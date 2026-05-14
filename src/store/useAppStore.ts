@@ -26,6 +26,7 @@ export interface Contact {
 }
 
 export interface User {
+  uid: string;
   name: string;
   phone: string;
   email: string;
@@ -62,11 +63,13 @@ export interface AppState {
   addContact: (contact: Contact) => void;
   updateBalance: (amount: number) => void;
   createVirtualCard: () => void;
+  setWalletCard: (hasCard: boolean) => void;
   addAccount: (account: Account, initialTransfer: number) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   user: {
+    uid: "",
     name: "António Pedro",
     phone: "+244 9XX XXX XXX",
     email: "anthony@exemplo.com",
@@ -129,6 +132,7 @@ export const useAppStore = create<AppState>((set) => ({
   addContact: (contact) => set((state) => ({ contacts: [contact, ...state.contacts] })),
   updateBalance: (amount) => set((state) => ({ wallet: { ...state.wallet, balance: state.wallet.balance + amount } })),
   createVirtualCard: () => set((state) => ({ wallet: { ...state.wallet, hasVirtualCard: true } })),
+  setWalletCard: (hasCard) => set((state) => ({ wallet: { ...state.wallet, hasVirtualCard: hasCard } })),
   addAccount: (account, initialTransfer) => set((state) => {
     const newTransaction: Transaction = {
       id: Date.now(),

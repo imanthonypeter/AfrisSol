@@ -23,7 +23,7 @@ export function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [bioPhase, setBioPhase] = useState<"idle" | "scanning" | "success">("idle");
-  const { settings, setAuthenticated, updateUser } = useAppStore();
+  const { settings, setAuthenticated, updateUser, setWalletCard } = useAppStore();
 
   // Ao montar, verificar se há um email guardado no localStorage
   useEffect(() => {
@@ -61,10 +61,12 @@ export function AuthScreen() {
         const { profile } = await loginUser(email, password);
         if (profile) {
           updateUser({
+            uid: profile.uid,
             name: profile.name,
             email: profile.email,
             phone: profile.phone,
           });
+          setWalletCard(profile.hasVirtualCard || false);
         }
       }
 

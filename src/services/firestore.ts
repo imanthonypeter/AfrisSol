@@ -44,6 +44,7 @@ export interface FirestoreUser {
   email: string;
   phone: string;
   location: string;
+  hasVirtualCard?: boolean;
   createdAt: Timestamp | null;
 }
 
@@ -57,6 +58,7 @@ export async function createUser(uid: string, data: { name: string; email: strin
     email: data.email,
     phone,
     location: "Luanda, Angola",
+    hasVirtualCard: false,
     createdAt: Timestamp.now(),
   };
   await setDoc(userRef, userData);
@@ -96,6 +98,12 @@ export async function findUserByEmail(email: string): Promise<FirestoreUser | nu
   const q = query(collection(db, "users"), where("email", "==", email));
   const snap = await getDocs(q);
   return snap.empty ? null : (snap.docs[0].data() as FirestoreUser);
+}
+
+// Activar o cartão virtual do utilizador
+export async function createVirtualCardInFirestore(uid: string): Promise<void> {
+  const userRef = doc(db, "users", uid);
+  await updateDoc(userRef, { hasVirtualCard: true });
 }
 
 // ─── Gestão de Contas Bancárias ──────────────────────────────

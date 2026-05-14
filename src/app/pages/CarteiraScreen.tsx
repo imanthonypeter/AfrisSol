@@ -172,7 +172,15 @@ export function CarteiraScreen() {
                   <button
                     onClick={() => {
                       setIsCreatingCard(true);
-                      setTimeout(() => {
+                      setTimeout(async () => {
+                        try {
+                          if (user.uid) {
+                            const { createVirtualCardInFirestore } = await import("../../services/firestore");
+                            await createVirtualCardInFirestore(user.uid);
+                          }
+                        } catch (err) {
+                          console.error("Error creating virtual card:", err);
+                        }
                         setIsCreatingCard(false);
                         createVirtualCard();
                       }, 2000);

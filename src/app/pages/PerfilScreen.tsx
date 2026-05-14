@@ -104,9 +104,9 @@ export function PerfilScreen() {
         <div className="bg-white rounded-2xl p-4" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
           <p className="text-gray-500 text-xs mb-3" style={{ fontWeight: 500 }}>INFORMAÇÕES PESSOAIS</p>
           {[
-            { icon: <Phone size={15} color="#6366f1" />, label: user.phone, field: "phone" as const },
-            { icon: <Mail size={15} color="#F47C20" />, label: user.email, field: "email" as const },
-            { icon: <MapPin size={15} color="#22c55e" />, label: user.location, field: "location" as const },
+            { icon: <Phone size={15} color="#6366f1" />, label: user.phone || "+244 9XX XXX XXX", field: "phone" as const },
+            { icon: <Mail size={15} color="#F47C20" />, label: user.email || "anthony@exemplo.com", field: "email" as const },
+            { icon: <MapPin size={15} color="#22c55e" />, label: user.location || "Luanda, Angola", field: "location" as const },
           ].map((info, i) => (
             <div key={i} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
               <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
