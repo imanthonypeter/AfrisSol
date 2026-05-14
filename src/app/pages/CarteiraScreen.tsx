@@ -1,21 +1,27 @@
 import { useState } from "react";
-import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check, X, Wallet, Briefcase, PiggyBank, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check, X, Wallet, Briefcase, PiggyBank, Sparkles, Loader2 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
+import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function CarteiraScreen() {
+  const navigate = useNavigate();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [copied, setCopied] = useState(false);
   const [isCreatingCard, setIsCreatingCard] = useState(false);
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [depositStep, setDepositStep] = useState<"form" | "processing" | "success">("form");
   const [accountTemplate, setAccountTemplate] = useState<"Salário" | "Despesas" | "Poupança" | "Personalizada">("Salário");
   const [customAccountName, setCustomAccountName] = useState("");
   const [initialTransfer, setInitialTransfer] = useState("");
   
-  const { user, wallet, accounts, transactions, createVirtualCard, addAccount } = useAppStore();
+  const { user, wallet, accounts, transactions, createVirtualCard, addAccount, updateBalance, addTransaction } = useAppStore();
 
   const totalEntradas = transactions.filter(t => t.positive).reduce((sum, t) => sum + t.amount, 0);
   const totalSaidas = transactions.filter(t => !t.positive).reduce((sum, t) => sum + t.amount, 0);
@@ -107,17 +113,18 @@ export function CarteiraScreen() {
             )}
           </div>
 
-          {/* Action buttons */}
+          {/* Botões de acção */}
           <div className="flex gap-3 mt-5">
             {[
-              { icon: <Plus size={18} color="white" />, label: "Depositar", bg: "#F47C20" },
-              { icon: <ArrowUpRight size={18} color="#162456" />, label: "Enviar", bg: "white" },
-              { icon: <ArrowDownLeft size={18} color="#162456" />, label: "Receber", bg: "white" },
+              { icon: <Plus size={18} color="white" />, label: "Depositar", bg: "#F47C20", action: () => setIsDepositOpen(true) },
+              { icon: <ArrowUpRight size={18} color="#162456" />, label: "Enviar", bg: "white", action: () => navigate("/transferencias") },
+              { icon: <ArrowDownLeft size={18} color="#162456" />, label: "Receber", bg: "white", action: () => navigate("/transferencias") },
             ].map((btn) => (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 key={btn.label}
+                onClick={btn.action}
                 className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl"
                 style={{ background: btn.bg, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
               >
@@ -460,6 +467,130 @@ export function CarteiraScreen() {
                   </button>
                 </div>
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Depósito */}
+      <AnimatePresence>
+        {isDepositOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (depositStep === "form") { setIsDepositOpen(false); setDepositAmount(""); } }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 flex flex-col max-h-[80vh]"
+            >
+              {depositStep === "success" ? (
+                <div className="flex flex-col items-center justify-center py-10 px-6">
+                  <SuccessCheckmark size={72} color="#22c55e" />
+                  <h3 className="text-xl font-bold text-gray-800 mt-4 mb-1">Depósito realizado!</h3>
+                  <p className="text-gray-500 text-sm mb-6">
+                    {formatCurrency(Number(depositAmount), wallet.currency)} adicionados à sua conta.
+                  </p>
+                  <button
+                    onClick={() => { setIsDepositOpen(false); setDepositAmount(""); setDepositStep("form"); }}
+                    className="w-full py-3.5 rounded-xl text-white font-bold"
+                    style={{ background: "linear-gradient(135deg, #F47C20, #e06010)" }}
+                  >
+                    Concluído
+                  </button>
+                </div>
+              ) : depositStep === "processing" ? (
+                <div className="flex flex-col items-center justify-center py-14">
+                  <Loader2 size={48} className="animate-spin text-[#F47C20] mb-4" />
+                  <p className="text-gray-600 font-semibold">A processar depósito...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
+                        <Plus size={20} className="text-[#F47C20]" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-[#162456]">Depositar</h3>
+                        <p className="text-xs text-gray-500">Adicionar fundos à conta principal</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { setIsDepositOpen(false); setDepositAmount(""); }}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div className="p-5 space-y-5">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block">Valor a depositar</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={depositAmount}
+                          onChange={(e) => setDepositAmount(e.target.value)}
+                          placeholder="0.00"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pl-12 text-lg font-semibold focus:outline-none focus:border-[#F47C20] focus:ring-1 focus:ring-[#F47C20] transition-shadow"
+                        />
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
+                          {wallet.currency}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Valores rápidos */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {["1000", "5000", "10000", "25000"].map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setDepositAmount(v)}
+                          className="py-2.5 rounded-xl text-sm border-2 transition-all"
+                          style={{
+                            borderColor: depositAmount === v ? "#F47C20" : "#E5E7EB",
+                            background: depositAmount === v ? "#FFF3E0" : "white",
+                            color: depositAmount === v ? "#F47C20" : "#374151",
+                            fontWeight: depositAmount === v ? 700 : 500,
+                          }}
+                        >
+                          {Number(v).toLocaleString("pt-AO")}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => {
+                        const num = Number(depositAmount);
+                        if (isNaN(num) || num <= 0) return;
+                        setDepositStep("processing");
+                        setTimeout(() => {
+                          updateBalance(num);
+                          addTransaction({
+                            id: Date.now(),
+                            icon: "receive",
+                            label: "Depósito",
+                            sub: "Agora mesmo",
+                            amount: num,
+                            positive: true,
+                            category: "Depósito",
+                          });
+                          setDepositStep("success");
+                        }, 1500);
+                      }}
+                      disabled={!depositAmount || Number(depositAmount) <= 0}
+                      className="w-full py-3.5 rounded-xl text-white font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ background: "linear-gradient(135deg, #162456 0%, #1a2e6e 100%)", boxShadow: "0 4px 12px rgba(22,36,86,0.2)" }}
+                    >
+                      Confirmar depósito
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </>
         )}
