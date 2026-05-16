@@ -58,7 +58,7 @@ export function AuthScreen() {
           setLoading(false);
           return;
         }
-        const { profile } = await loginUser(email, password);
+        const { profile } = await loginUser(email, password, rememberMe);
         if (profile) {
           updateUser({
             uid: profile.uid,

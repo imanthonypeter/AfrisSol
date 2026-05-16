@@ -6,6 +6,9 @@ import {
 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../services/firebase";
+import { toast } from "sonner";
 
 import { CurrencySelector } from "../components/CurrencySelector";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
@@ -126,7 +129,25 @@ export function PerfilScreen() {
           ))}
           {editMode && (
             <button
-              onClick={() => setEditMode(false)}
+              onClick={async () => {
+                if (!user.uid) {
+                  toast.error("Utilizador não encontrado.");
+                  return;
+                }
+                try {
+                  const userRef = doc(db, "users", user.uid);
+                  await updateDoc(userRef, {
+                    name: user.name,
+                    phone: user.phone,
+                    email: user.email,
+                    location: user.location,
+                  });
+                  setEditMode(false);
+                  toast.success("Perfil actualizado com sucesso!");
+                } catch (error) {
+                  toast.error("Erro ao actualizar perfil.");
+                }
+              }}
               className="w-full mt-3 py-2.5 rounded-xl text-white text-sm"
               style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
             >
@@ -147,7 +168,7 @@ export function PerfilScreen() {
               <div key={i}>
                 <button 
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-                  onClick={item.onClick}
+                  onClick={item.onClick || (() => toast.info("Funcionalidade em breve!"))}
                 >
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"

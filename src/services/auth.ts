@@ -3,6 +3,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   type User,
 } from "firebase/auth";
 import { auth } from "./firebase";
@@ -23,8 +26,11 @@ export async function registerUser(
 // ─── Iniciar sessão ──────────────────────────────────────────
 export async function loginUser(
   email: string,
-  password: string
+  password: string,
+  rememberMe: boolean = true
 ): Promise<{ user: User; profile: FirestoreUser | null }> {
+  const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+  await setPersistence(auth, persistenceType);
   const credential = await signInWithEmailAndPassword(auth, email, password);
   const profile = await getUser(credential.user.uid);
   return { user: credential.user, profile };
