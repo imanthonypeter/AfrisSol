@@ -82,7 +82,7 @@ export function PerfilScreen() {
                 style={{ fontWeight: 600, fontSize: "16px" }}
               />
             ) : (
-              <p className="text-white" style={{ fontWeight: 700, fontSize: "17px" }}>{user.name}</p>
+              <p className="text-white" style={{ fontWeight: 700, fontSize: "17px" }}>{user.name || "Sem Nome"}</p>
             )}
             <p className="text-white/60 text-xs">Conta verificada ✓</p>
             <div
@@ -108,7 +108,7 @@ export function PerfilScreen() {
           <p className="text-gray-500 text-xs mb-3" style={{ fontWeight: 500 }}>INFORMAÇÕES PESSOAIS</p>
           {[
             { icon: <Phone size={15} color="#6366f1" />, label: user.phone || "+244 9XX XXX XXX", field: "phone" as const },
-            { icon: <Mail size={15} color="#F47C20" />, label: user.email || "anthony@exemplo.com", field: "email" as const },
+            { icon: <Mail size={15} color="#F47C20" />, label: user.email || "Sem e-mail", field: "email" as const },
             { icon: <MapPin size={15} color="#22c55e" />, label: user.location || "Luanda, Angola", field: "location" as const },
           ].map((info, i) => (
             <div key={i} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">

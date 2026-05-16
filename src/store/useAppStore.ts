@@ -70,10 +70,10 @@ export interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   user: {
     uid: "",
-    name: "António Pedro",
-    phone: "+244 9XX XXX XXX",
-    email: "anthony@exemplo.com",
-    location: "Luanda, Angola",
+    name: "",
+    phone: "",
+    email: "",
+    location: "",
     avatar: "",
   },
   settings: {

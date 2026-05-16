@@ -6,13 +6,13 @@ import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion } from "framer-motion";
 
 const services = [
-  { id: "unitelmoney", icon: <svg viewBox="0 0 100 100" className="w-8 h-8"><circle cx="50" cy="50" r="50" fill="#F47C20"/><text x="50" y="55" fill="white" fontSize="24" fontWeight="bold" fontFamily="Arial" textAnchor="middle">U</text></svg>, label: "Unitel Money", provider: "Unitel", color: "#F47C20", bg: "#FFF3E0" },
-  { id: "afrimoney", icon: <svg viewBox="0 0 100 100" className="w-8 h-8"><rect width="100" height="100" rx="20" fill="#E00075"/><text x="50" y="55" fill="white" fontSize="22" fontWeight="bold" fontFamily="Arial" textAnchor="middle">Afri</text></svg>, label: "Afrimoney", provider: "Africell", color: "#E00075", bg: "#FCE4EC" },
+  { id: "unitelmoney", icon: <img src="https://www.aicep.com/wp-content/uploads/2021/09/unitel-mobile-money-1.png" alt="Unitel Money" className="w-8 h-8 rounded-full object-cover bg-white" />, label: "Unitel Money", provider: "Unitel", color: "#F47C20", bg: "#FFF3E0" },
+  { id: "afrimoney", icon: <img src="https://play-lh.googleusercontent.com/RdcJFPZm-crIFYqDz9RZiKpch3GZBNcCf1_gOefvjCYezabqjAZGwP_bw_hRSzMMpA=w240-h480-rw" alt="Afrimoney" className="w-8 h-8 rounded-xl object-cover" />, label: "Afrimoney", provider: "Africell", color: "#E00075", bg: "#FCE4EC" },
   { id: "dstv", icon: <svg viewBox="0 0 100 100" className="w-8 h-8"><rect width="100" height="100" rx="50" fill="#00A5DF"/><path d="M25,35 h20 c15,0 20,10 20,15 c0,5 -5,15 -20,15 h-20 v-30" fill="none" stroke="white" strokeWidth="8"/></svg>, label: "DStv", provider: "Multichoice Angola", color: "#162456", bg: "#EFF6FF" },
   { id: "electricidade", icon: <Zap size={22} />, label: "Electricidade", provider: "ENDE", color: "#F47C20", bg: "#FFF3E0" },
   { id: "agua", icon: <Droplets size={22} />, label: "Água", provider: "EPAL", color: "#3b82f6", bg: "#EFF6FF" },
   { id: "internet", icon: <Wifi size={22} />, label: "Internet", provider: "Unitel, Angola Telecom", color: "#6366f1", bg: "#EEF2FF" },
-  { id: "tv", icon: <svg viewBox="0 0 100 100" className="w-8 h-8"><text x="50" y="55" fill="#8b5cf6" fontSize="28" fontWeight="900" fontFamily="Arial" textAnchor="middle" style={{ fontStyle: "italic" }}>TVC</text></svg>, label: "TV Cabo", provider: "TV Cabo, ZAP", color: "#8b5cf6", bg: "#F5F3FF" },
+  { id: "tv", icon: <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS49lQrzJySNWgElAyAXHDWy721oXRSoOg12A&s" alt="TV Cabo" className="w-8 h-8 rounded-full object-cover" />, label: "TV Cabo", provider: "TV Cabo, ZAP", color: "#8b5cf6", bg: "#F5F3FF" },
   { id: "telefone", icon: <Phone size={22} />, label: "Telefone Fixo", provider: "Angola Telecom", color: "#22c55e", bg: "#E8F5E9" },
   { id: "seguro", icon: <Heart size={22} />, label: "Seguros", provider: "ENSA, AAA Seguros", color: "#ef4444", bg: "#FEF2F2" },
   { id: "educacao", icon: <GraduationCap size={22} />, label: "Educação", provider: "Propinas, Mensalidades", color: "#F47C20", bg: "#FFF3E0" },
