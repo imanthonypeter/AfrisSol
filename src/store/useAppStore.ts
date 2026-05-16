@@ -145,7 +145,7 @@ export const useAppStore = create<AppState>((set) => ({
     };
     return {
       accounts: [...state.accounts, account],
-      wallet: { ...state.wallet, balance: state.wallet.balance - initialTransfer },
+      wallet: { ...state.wallet },
       transactions: [newTransaction, ...state.transactions],
     };
   }),
