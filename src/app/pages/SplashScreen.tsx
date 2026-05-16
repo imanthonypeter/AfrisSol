@@ -1,16 +1,18 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
+import { useAppStore } from "../../store/useAppStore";
 
 export function SplashScreen() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAppStore();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate("/auth");
+      navigate(isAuthenticated ? "/home" : "/auth");
     }, 2200);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   return (
     <div

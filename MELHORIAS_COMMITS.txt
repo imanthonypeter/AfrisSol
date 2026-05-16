@@ -1,0 +1,24 @@
+═══════════════════════════════════════════════════════════════════
+  AFRISOL — REGISTO DE MELHORIAS E ALTERAÇÕES
+  Data: 16 de Maio de 2026
+═══════════════════════════════════════════════════════════════════
+
+Este ficheiro documenta todas as melhorias de arquitetura, segurança e interface implementadas recentemente na aplicação AfriSol.
+
+───────────────────────────────────────────────────────────────────
+RESUMO DAS ALTERAÇÕES
+───────────────────────────────────────────────────────────────────
+ 
+1. AuthProvider & Persistência de Sessão
+Foi criado um componente AuthProvider para gerir a sessão do utilizador globalmente, escutando as mudanças de estado (onAuthStateChanged) do Firebase. Isso garante que a sessão do utilizador persista ao recarregar a página (F5). O ecrã de Splash agora redireciona corretamente para a página principal (Home) se o utilizador já estiver autenticado, em vez de o obrigar a passar pela página de autenticação. Durante a validação da sessão, é apresentado um ecrã de carregamento com o branding AfriSol.
+
+2. Sincronização com Firestore e Dados Reais
+Os dados mockados hardcoded foram completamente removidos da store (Zustand). O saldo inicial padrão de novas contas foi atualizado de 650.000 para 850.000 AOA no serviço firestore.ts. O AuthProvider agora carrega as contas bancárias, as transações financeiras, os dados do cartão virtual e calcula o saldo dinamicamente consultando o Firestore para o utilizador autenticado, reflectindo sempre dados reais e atualizados.
+
+3. Segurança e Lógica do Cartão Virtual VISA
+A implementação do cartão virtual foi reformulada para segurança máxima. Ao invés de uma flag simples, a aplicação agora gera um número de cartão VISA aleatório e único (usando o algoritmo de Luhn), além de gerar também um CVV aleatório e uma data de validade de 3 a 5 anos no futuro. Todos estes detalhes sensíveis do cartão são guardados e lidos da sub-coleção do utilizador no Firestore. No ecrã da Carteira (CarteiraScreen), os dados reais do cartão são apresentados. O CVV é protegido, sendo exibido por defeito como "***". Para o revelar, o utilizador tem de clicar no ícone do cadeado, o que simula uma autenticação biométrica via janela de confirmação. Após ser revelado, o CVV volta a ser ocultado (auto-hide) passados 10 segundos.
+
+4. Configuração PWA e Favicon
+O logótipo da aplicação AfriSol (AfrisSol_Logo.jpeg) foi convertido e copiado para a pasta "public" nos formatos requeridos para ícones PWA e favicon (logo-192.png, logo-512.png e favicon.ico). O ficheiro index.html foi atualizado para referenciar corretamente estes ficheiros, incluindo metadados para dispositivos Apple. Adicionalmente, foi criado e associado um ficheiro manifest.json configurado com as cores, branding e descrições da marca para que a aplicação possa ser devidamente instalada em dispositivos móveis ou desktop como uma Progressive Web App (PWA) nativa, sem perder a identidade visual.
+
+═══════════════════════════════════════════════════════════════════

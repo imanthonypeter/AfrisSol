@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check, X, Wallet, Briefcase, PiggyBank, Sparkles, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check, X, Wallet, Briefcase, PiggyBank, Sparkles, Loader2, Lock, Unlock } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
@@ -20,8 +20,9 @@ export function CarteiraScreen() {
   const [accountTemplate, setAccountTemplate] = useState<"Salário" | "Despesas" | "Poupança" | "Personalizada">("Salário");
   const [customAccountName, setCustomAccountName] = useState("");
   const [initialTransfer, setInitialTransfer] = useState("");
+  const [cvvVisible, setCvvVisible] = useState(false);
   
-  const { user, wallet, accounts, transactions, createVirtualCard, addAccount, updateBalance, addTransaction } = useAppStore();
+  const { user, wallet, virtualCard, accounts, transactions, createVirtualCard, setVirtualCard, addAccount, updateBalance, addTransaction } = useAppStore();
 
   const totalEntradas = transactions.filter(t => t.positive).reduce((sum, t) => sum + t.amount, 0);
   const totalSaidas = transactions.filter(t => !t.positive).reduce((sum, t) => sum + t.amount, 0);
@@ -176,7 +177,14 @@ export function CarteiraScreen() {
                         try {
                           if (user.uid) {
                             const { createVirtualCardInFirestore } = await import("../../services/firestore");
-                            await createVirtualCardInFirestore(user.uid);
+                            const cardData = await createVirtualCardInFirestore(user.uid, user.name || "TITULAR");
+                            setVirtualCard({
+                              cardNumber: cardData.cardNumber,
+                              cvv: cardData.cvv,
+                              expiryMonth: cardData.expiryMonth,
+                              expiryYear: cardData.expiryYear,
+                              holderName: cardData.holderName,
+                            });
                           }
                         } catch (err) {
                           console.error("Error creating virtual card:", err);
@@ -255,7 +263,10 @@ export function CarteiraScreen() {
                     <p className="text-white/50 text-[10px] uppercase tracking-wider mb-1">Número do Cartão</p>
                     <div className="flex items-center gap-3">
                       <span className="text-white tracking-widest font-mono shadow-sm" style={{ fontWeight: 500, fontSize: "16px", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
-                        {balanceVisible ? "4532 9845 2314 3456" : "•••• •••• •••• 3456"}
+                        {balanceVisible && virtualCard
+                          ? virtualCard.cardNumber.replace(/(.{4})/g, "$1 ").trim()
+                          : `•••• •••• •••• ${virtualCard ? virtualCard.cardNumber.slice(-4) : "0000"}`
+                        }
                       </span>
                       <button onClick={handleCopy} className="p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
                         {copied ? <Check size={14} color="#4ade80" /> : <Copy size={14} color="rgba(255,255,255,0.7)" />}
@@ -270,18 +281,37 @@ export function CarteiraScreen() {
                 <div className="flex gap-6">
                   <div>
                     <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Titular</p>
-                    <p className="text-white text-xs uppercase shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>{user.name}</p>
+                    <p className="text-white text-xs uppercase shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>{virtualCard?.holderName || user.name}</p>
                   </div>
                   <div>
                     <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Validade</p>
-                    <p className="text-white text-xs font-mono shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>12/28</p>
+                    <p className="text-white text-xs font-mono shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>{virtualCard ? `${virtualCard.expiryMonth}/${virtualCard.expiryYear}` : "--/--"}</p>
                   </div>
-                  {balanceVisible && (
-                    <div>
-                      <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">CVV</p>
-                      <p className="text-white text-xs font-mono shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>452</p>
+                  <div>
+                    <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">CVV</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-white text-xs font-mono shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>
+                        {cvvVisible ? (virtualCard?.cvv || "---") : "***"}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (cvvVisible) {
+                            setCvvVisible(false);
+                          } else {
+                            const confirmed = window.confirm("Confirmar identidade para revelar o CVV?");
+                            if (confirmed) {
+                              setCvvVisible(true);
+                              setTimeout(() => setCvvVisible(false), 10000);
+                            }
+                          }
+                        }}
+                        className="p-0.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                      >
+                        {cvvVisible ? <Unlock size={10} color="#4ade80" /> : <Lock size={10} color="rgba(255,255,255,0.5)" />}
+                      </button>
                     </div>
-                  )}
+                  </div>
                 </div>
                 {/* VISA Logo Refined */}
                 <div className="pb-1">

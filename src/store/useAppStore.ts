@@ -39,6 +39,14 @@ export interface Settings {
   twoFactorAuth: boolean;
 }
 
+export interface VirtualCardData {
+  cardNumber: string;
+  cvv: string;
+  expiryMonth: string;
+  expiryYear: string;
+  holderName: string;
+}
+
 export interface AppState {
   user: User;
   settings: Settings;
@@ -47,6 +55,7 @@ export interface AppState {
     currency: string;
     hasVirtualCard: boolean;
   };
+  virtualCard: VirtualCardData | null;
   transactions: Transaction[];
   accounts: Account[];
   contacts: Contact[];
@@ -64,6 +73,7 @@ export interface AppState {
   updateBalance: (amount: number) => void;
   createVirtualCard: () => void;
   setWalletCard: (hasCard: boolean) => void;
+  setVirtualCard: (card: VirtualCardData | null) => void;
   addAccount: (account: Account, initialTransfer: number) => void;
 }
 
@@ -81,29 +91,13 @@ export const useAppStore = create<AppState>((set) => ({
     twoFactorAuth: false,
   },
   wallet: {
-    id: "AO06004000001234567890123",
-    balance: 650000,
+    balance: 0,
     currency: "AOA",
     hasVirtualCard: false,
   },
-  transactions: [
-    { id: 1, icon: "receive", label: "Recebimento de Maria", sub: "Hoje, 10:45", amount: 2500, positive: true, category: "Transferência" },
-    { id: 2, icon: "internet", label: "Pagamento de Internet", sub: "Hoje, 09:30", amount: 500, positive: false, category: "Pagamento" },
-    { id: 3, icon: "send", label: "Envio para António", sub: "Ontem, 18:15", amount: 1200, positive: false, category: "Transferência" },
-    { id: 4, icon: "receive", label: "Recebimento de Fatima", sub: "Ontem, 14:00", amount: 3000, positive: true, category: "Transferência" },
-    { id: 5, icon: "electricity", label: "Pagamento de Electricidade", sub: "2 dias atrás", amount: 800, positive: false, category: "Pagamento" },
-    { id: 6, icon: "recharge", label: "Recarga Vodacom", sub: "2 dias atrás, 11:00", amount: 200, positive: false, category: "Recarga" },
-    { id: 7, icon: "receive", label: "Recebimento de Pedro", sub: "3 dias atrás", amount: 1500, positive: true, category: "Transferência" },
-    { id: 8, icon: "send", label: "Envio para João", sub: "3 dias atrás, 16:30", amount: 750, positive: false, category: "Transferência" },
-    { id: 9, icon: "electricity", label: "Pagamento de Água", sub: "5 dias atrás", amount: 600, positive: false, category: "Pagamento" },
-    { id: 10, icon: "internet", label: "Recarga de Dados", sub: "5 dias atrás, 09:00", amount: 300, positive: false, category: "Recarga" },
-    { id: 11, icon: "receive", label: "Depósito na conta", sub: "1 semana atrás", amount: 5000, positive: true, category: "Depósito" },
-    { id: 12, icon: "send", label: "Envio para Ana", sub: "1 semana atrás", amount: 900, positive: false, category: "Transferência" },
-  ],
-  accounts: [
-    { label: "Conta principal", num: "AO 1234 5678 9012", balance: 650000, color: "#162456" },
-    { label: "Poupança", num: "AO 9876 5432 1098", balance: 0, color: "#F47C20" },
-  ],
+  virtualCard: null,
+  transactions: [],
+  accounts: [],
   contacts: [
     { id: 1, name: "Maria Santos", phone: "+244 923 123 456", initials: "MS", color: "#6366f1" },
     { id: 2, name: "Carlos Ndongo", phone: "+244 926 987 654", initials: "CN", color: "#F47C20" },
@@ -133,6 +127,7 @@ export const useAppStore = create<AppState>((set) => ({
   updateBalance: (amount) => set((state) => ({ wallet: { ...state.wallet, balance: state.wallet.balance + amount } })),
   createVirtualCard: () => set((state) => ({ wallet: { ...state.wallet, hasVirtualCard: true } })),
   setWalletCard: (hasCard) => set((state) => ({ wallet: { ...state.wallet, hasVirtualCard: hasCard } })),
+  setVirtualCard: (card) => set({ virtualCard: card }),
   addAccount: (account, initialTransfer) => set((state) => {
     const newTransaction: Transaction = {
       id: Date.now(),

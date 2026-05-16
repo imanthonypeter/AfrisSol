@@ -69,7 +69,7 @@ export async function createUser(uid: string, data: { name: string; email: strin
     userId: uid,
     accountName: "Conta principal",
     iban,
-    balance: 650000,
+    balance: 850000,
     color: "#162456",
     createdAt: serverTimestamp(),
   });
@@ -100,10 +100,87 @@ export async function findUserByEmail(email: string): Promise<FirestoreUser | nu
   return snap.empty ? null : (snap.docs[0].data() as FirestoreUser);
 }
 
-// Activar o cartão virtual do utilizador
-export async function createVirtualCardInFirestore(uid: string): Promise<void> {
-  const userRef = doc(db, "users", uid);
-  await updateDoc(userRef, { hasVirtualCard: true });
+// ─── Gestão de Cartão Virtual VISA ──────────────────────────
+
+export interface VirtualCard {
+  cardNumber: string;
+  cvv: string;
+  expiryMonth: string;
+  expiryYear: string;
+  holderName: string;
+  createdAt: Timestamp | null;
+}
+
+// Gerar número de cartão VISA aleatório com algoritmo de Luhn
+function generateVisaCardNumber(): string {
+  // VISA começa com 4
+  const digits = [4];
+  // Gerar 14 dígitos aleatórios (total 15 antes do check digit)
+  for (let i = 0; i < 14; i++) {
+    digits.push(Math.floor(Math.random() * 10));
+  }
+  // Calcular dígito de verificação (Luhn)
+  let sum = 0;
+  for (let i = 0; i < 15; i++) {
+    let d = digits[14 - i];
+    if (i % 2 === 0) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+  }
+  const checkDigit = (10 - (sum % 10)) % 10;
+  digits.push(checkDigit);
+  return digits.join("");
+}
+
+// Formatar número de cartão para apresentação: 4532 9845 2314 3456
+export function formatCardNumber(num: string): string {
+  return num.replace(/(.{4})/g, "$1 ").trim();
+}
+
+// Gerar CVV aleatório de 3 dígitos
+function generateCVV(): string {
+  return String(Math.floor(100 + Math.random() * 900));
+}
+
+// Gerar data de validade (3 a 5 anos no futuro)
+function generateExpiry(): { month: string; year: string } {
+  const now = new Date();
+  const yearsAhead = 3 + Math.floor(Math.random() * 3); // 3 a 5 anos
+  const month = String(1 + Math.floor(Math.random() * 12)).padStart(2, "0");
+  const year = String(now.getFullYear() + yearsAhead).slice(-2);
+  return { month, year };
+}
+
+// Criar cartão virtual e guardar no Firestore
+export async function createVirtualCardInFirestore(uid: string, holderName: string): Promise<VirtualCard> {
+  const cardNumber = generateVisaCardNumber();
+  const cvv = generateCVV();
+  const expiry = generateExpiry();
+
+  const cardData: VirtualCard = {
+    cardNumber,
+    cvv,
+    expiryMonth: expiry.month,
+    expiryYear: expiry.year,
+    holderName: holderName.toUpperCase(),
+    createdAt: Timestamp.now(),
+  };
+
+  // Guardar cartão na subcollection do utilizador
+  await setDoc(doc(db, "users", uid, "virtualCard", "visa"), cardData);
+
+  // Marcar que o utilizador tem cartão virtual
+  await updateDoc(doc(db, "users", uid), { hasVirtualCard: true });
+
+  return cardData;
+}
+
+// Obter dados do cartão virtual do utilizador
+export async function getVirtualCard(uid: string): Promise<VirtualCard | null> {
+  const snap = await getDoc(doc(db, "users", uid, "virtualCard", "visa"));
+  return snap.exists() ? (snap.data() as VirtualCard) : null;
 }
 
 // ─── Gestão de Contas Bancárias ──────────────────────────────

@@ -1,0 +1,24 @@
+{
+  "name": "AfrisSol - Carteira Digital",
+  "short_name": "AfrisSol",
+  "description": "A sua carteira digital angolana. Envie, receba e gira o seu dinheiro com segurança.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#162456",
+  "theme_color": "#162456",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
