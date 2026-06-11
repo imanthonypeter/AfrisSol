@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check, X, Wallet, Briefcase, PiggyBank, Sparkles, Loader2, Lock, Unlock } from "lucide-react";
+import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check, X, Wallet, Briefcase, PiggyBank, Sparkles, Loader2, Lock, Unlock, Snowflake, Trash2 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
@@ -173,14 +173,20 @@ export function CarteiraScreen() {
           ) : (
             <motion.div
               whileHover={{ y: -5, boxShadow: "0 12px 40px rgba(22, 36, 86, 0.45)" }}
-              className="relative rounded-2xl p-5 overflow-hidden transition-shadow"
+              className="relative rounded-2xl p-5 overflow-hidden transition-shadow mb-4"
               style={{
-                background: "linear-gradient(135deg, #162456 0%, #0e1835 50%, #1a3070 100%)",
+                background: "linear-gradient(135deg, rgba(22,36,86,0.9) 0%, rgba(14,24,53,0.95) 50%, rgba(26,48,112,0.9) 100%)",
                 minHeight: "190px",
                 boxShadow: "0 8px 32px rgba(22, 36, 86, 0.35)",
-                border: "1px solid rgba(255,255,255,0.1)"
+                border: "1px solid rgba(255,255,255,0.15)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)"
               }}
             >
+              {/* Glassmorphism Shine */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              <div className="absolute -inset-x-1/2 top-0 h-full w-[200%] bg-gradient-to-r from-transparent via-white/5 to-transparent -rotate-45 transform translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
+
               {/* Refined Background pattern */}
               <div
                 className="absolute inset-0 opacity-20 mix-blend-overlay"
@@ -190,25 +196,17 @@ export function CarteiraScreen() {
                 }}
               />
               <div
-                className="absolute inset-0 opacity-[0.15]"
+                className="absolute inset-0 opacity-[0.2]"
                 style={{
-                  backgroundImage: "radial-gradient(circle at 100% 0%, #F47C20 0%, transparent 45%), radial-gradient(circle at 0% 100%, #6366f1 0%, transparent 45%)"
+                  backgroundImage: "radial-gradient(circle at 100% 0%, #F47C20 0%, transparent 50%), radial-gradient(circle at 0% 100%, #6366f1 0%, transparent 50%)"
                 }}
               />
-              
-              <div className="absolute top-0 right-0 w-64 h-64 opacity-[0.03] pointer-events-none transform translate-x-1/4 -translate-y-1/4">
-                <svg viewBox="0 0 200 200" fill="none">
-                  <circle cx="100" cy="100" r="100" fill="white" />
-                  <circle cx="100" cy="100" r="75" fill="none" stroke="white" strokeWidth="2" />
-                  <circle cx="100" cy="100" r="50" fill="none" stroke="white" strokeWidth="2" />
-                </svg>
-              </div>
 
               {/* Card Header */}
               <div className="relative flex items-start justify-between mb-5">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                    <img src={logoImg} alt="AfrisSol" className="w-5 h-5 object-contain rounded-sm" />
+                  <div className="w-7 h-7 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
+                    <img src={logoImg} alt="AfrisSol" className="w-5 h-5 object-contain rounded-md" />
                   </div>
                   <div>
                     <span className="text-white text-sm" style={{ fontWeight: 700, letterSpacing: "-0.5px" }}>afris</span>
@@ -218,7 +216,7 @@ export function CarteiraScreen() {
                 {/* NFC Icon */}
                 <div className="flex items-center gap-2">
                   <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest mr-1">Virtual</span>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-70">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-80">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="white" strokeWidth="1.5" fill="none" />
                     <path d="M12 6v12M8 9l4-3 4 3M8 15l4 3 4-3" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
@@ -231,14 +229,14 @@ export function CarteiraScreen() {
                   <div>
                     <p className="text-white/50 text-[10px] uppercase tracking-wider mb-1">Número do Cartão</p>
                     <div className="flex items-center gap-3">
-                      <span className="text-white tracking-widest font-mono shadow-sm" style={{ fontWeight: 500, fontSize: "16px", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
+                      <span className="text-white tracking-widest font-mono shadow-sm" style={{ fontWeight: 600, fontSize: "18px", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
                         {balanceVisible && virtualCard
                           ? virtualCard.cardNumber.replace(/(.{4})/g, "$1 ").trim()
                           : `•••• •••• •••• ${virtualCard ? virtualCard.cardNumber.slice(-4) : "0000"}`
                         }
                       </span>
-                      <button onClick={handleCopy} className="p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                        {copied ? <Check size={14} color="#4ade80" /> : <Copy size={14} color="rgba(255,255,255,0.7)" />}
+                      <button onClick={handleCopy} className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors border border-white/10">
+                        {copied ? <Check size={14} color="#4ade80" /> : <Copy size={14} color="rgba(255,255,255,0.8)" />}
                       </button>
                     </div>
                   </div>
@@ -246,11 +244,11 @@ export function CarteiraScreen() {
               </div>
 
               {/* Card Footer */}
-              <div className="relative flex items-end justify-between pt-2 border-t border-white/10">
+              <div className="relative flex items-end justify-between pt-3 border-t border-white/20">
                 <div className="flex gap-6">
                   <div>
                     <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Titular</p>
-                    <p className="text-white text-xs uppercase shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>{virtualCard?.holderName || user.name}</p>
+                    <p className="text-white text-xs uppercase shadow-sm truncate max-w-[100px]" style={{ fontWeight: 600, letterSpacing: "1px" }}>{virtualCard?.holderName || user.name}</p>
                   </div>
                   <div>
                     <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Validade</p>
@@ -273,18 +271,18 @@ export function CarteiraScreen() {
                             setTimeout(() => setCvvVisible(false), 10000);
                           }
                         }}
-                        className="p-0.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                        className="p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors border border-white/10"
                       >
-                        {cvvVisible ? <Unlock size={10} color="#4ade80" /> : <Lock size={10} color="rgba(255,255,255,0.5)" />}
+                        {cvvVisible ? <Unlock size={10} color="#4ade80" /> : <Lock size={10} color="rgba(255,255,255,0.8)" />}
                       </button>
                     </div>
                   </div>
                 </div>
                 {/* VISA Logo Refined */}
-                <div className="pb-1">
+                <div className="pb-0.5">
                   <span
                     className="text-white tracking-tight"
-                    style={{ fontSize: "24px", fontWeight: 900, fontStyle: "italic", letterSpacing: "-1px", textShadow: "0 2px 10px rgba(0,0,0,0.2)" }}
+                    style={{ fontSize: "28px", fontWeight: 900, fontStyle: "italic", letterSpacing: "-1px", textShadow: "0 2px 10px rgba(0,0,0,0.3)" }}
                   >
                     VISA
                   </span>
@@ -292,8 +290,15 @@ export function CarteiraScreen() {
               </div>
             </motion.div>
           )}
+
           {wallet.hasVirtualCard && (
-            <div className="flex justify-center mt-3">
+            <div className="flex items-center justify-center gap-4 mt-2 mb-6">
+              <button 
+                onClick={() => toast.info("Cartão congelado com sucesso!")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-50 text-blue-600 font-semibold text-xs hover:bg-blue-100 transition-colors shadow-sm"
+              >
+                <Snowflake size={14} /> Congelar Cartão
+              </button>
               <button 
                 onClick={() => {
                   if (wallet.balance < 0) {
@@ -315,9 +320,9 @@ export function CarteiraScreen() {
                     }
                   });
                 }}
-                className="text-xs text-red-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-50 text-red-500 font-semibold text-xs hover:bg-red-100 transition-colors shadow-sm"
               >
-                <X size={14} /> Apagar Cartão
+                <Trash2 size={14} /> Apagar Cartão
               </button>
             </div>
           )}

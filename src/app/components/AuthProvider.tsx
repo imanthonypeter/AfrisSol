@@ -1,6 +1,6 @@
 import { useEffect, useState, createContext, useContext, type ReactNode } from "react";
 import { onAuthChange } from "../../services/auth";
-import { getUser, getUserAccounts, getUserTransactions } from "../../services/firestore";
+import { getUser, getUserAccounts, getUserTransactions, bootstrapOldUserAccounts } from "../../services/firestore";
 import { useAppStore } from "../../store/useAppStore";
 import type { User as FirebaseUser } from "firebase/auth";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
@@ -81,7 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setWalletCard(profile.hasVirtualCard || false);
 
             // Carregar contas do Firestore e atualizar saldo total
-            const accounts = await getUserAccounts(user.uid);
+            let accounts = await getUserAccounts(user.uid);
+            
+            // Resgate para contas antigas que não possuíam saldo/contas criadas no registo
+            if (accounts.length === 0) {
+              await bootstrapOldUserAccounts(user.uid);
+              accounts = await getUserAccounts(user.uid);
+            }
+
             const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
             const formattedAccounts = accounts.map((acc) => ({
               label: acc.accountName,

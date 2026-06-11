@@ -7,7 +7,7 @@ import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion, AnimatePresence } from "framer-motion";
 import { registerUser, loginUser } from "../../services/auth";
-import type { User as FirebaseUser } from "firebase/auth";
+
 // Chave para guardar o email no localStorage
 const REMEMBER_KEY = "afrisol_remember_email";
 

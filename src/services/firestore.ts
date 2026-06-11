@@ -99,6 +99,42 @@ export async function createUser(uid: string, data: { name: string; email: strin
   return { ...userData, phone };
 }
 
+// Resgatar utilizador antigo que não tem contas criadas (adiciona saldo e 2 contas padrão)
+export async function bootstrapOldUserAccounts(uid: string) {
+  // Criar conta principal com IBAN e saldo inicial
+  const iban = generateIBAN();
+  const mainAccountRef = await addDoc(collection(db, "accounts"), {
+    userId: uid,
+    accountName: "Conta principal",
+    iban,
+    balance: 856000,
+    color: "#162456",
+    createdAt: serverTimestamp(),
+  });
+
+  // Registar o depósito inicial
+  await addDoc(collection(db, "transactions"), {
+    senderAccountId: "system_deposit",
+    receiverAccountId: mainAccountRef.id,
+    senderUserId: "system",
+    receiverUserId: uid,
+    amount: 856000,
+    type: "deposit",
+    description: "Depósito inicial AfriSol",
+    createdAt: serverTimestamp(),
+  });
+
+  // Criar conta poupança
+  await addDoc(collection(db, "accounts"), {
+    userId: uid,
+    accountName: "Poupança",
+    iban: generateIBAN(),
+    balance: 0,
+    color: "#F47C20",
+    createdAt: serverTimestamp(),
+  });
+}
+
 // Obter dados de um utilizador pelo UID
 export async function getUser(uid: string): Promise<FirestoreUser | null> {
   const snap = await getDoc(doc(db, "users", uid));
