@@ -4,6 +4,7 @@ import { useAppStore, Contact } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion, AnimatePresence } from "framer-motion";
+import { ReceiptModal, TransactionReceipt } from "../../components/ReceiptModal";
 export function TransferenciasScreen() {
   const [tab, setTab] = useState<"enviar" | "receber">("enviar");
   const [amount, setAmount] = useState("");
@@ -14,6 +15,7 @@ export function TransferenciasScreen() {
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [nota, setNota] = useState("");
+  const [currentReceipt, setCurrentReceipt] = useState<TransactionReceipt | null>(null);
   const { wallet, contacts, addContact, updateBalance, addTransaction } = useAppStore();
 
   const handleAddContact = () => {
@@ -35,26 +37,69 @@ export function TransferenciasScreen() {
   };
 
   const handleSend = () => {
-    if (amount && (recipient || selectedContact)) setStep("confirm");
+    if (!amount) {
+      alert("Por favor, insira um valor.");
+      return;
+    }
+    if (tab === "enviar" && !recipient && !selectedContact) {
+      alert("Por favor, selecione ou digite um destinatário.");
+      return;
+    }
+    setStep("confirm");
   };
 
   const handleConfirm = () => {
-    setStep("success");
     const numAmount = parseFloat(amount);
-    if (tab === "enviar" && !isNaN(numAmount) && numAmount > 0) {
+    
+    if (tab === "enviar") {
+      if (isNaN(numAmount) || numAmount <= 0) {
+        alert("Valor inválido.");
+        setStep("form");
+        return;
+      }
+      if (numAmount > wallet.balance) {
+        alert("Saldo insuficiente.");
+        setStep("form");
+        return;
+      }
+
       updateBalance(-numAmount);
+      
+      const receipt: TransactionReceipt = {
+        type: "Transferência",
+        amount: numAmount,
+        currency: wallet.currency,
+        date: Date.now(),
+        reference: `TRF${Math.floor(Math.random() * 100000000)}`,
+        fromName: "João Macuácua",
+        fromAccount: "Banco AfriSol",
+        toName: selectedContact?.name || recipient || "Desconhecido",
+        toAccount: `${(selectedContact?.phone || recipient || "").startsWith("AO") ? "IBAN" : "Contacto"}: ${selectedContact?.phone || recipient || "N/A"}`,
+      };
+
+      setCurrentReceipt(receipt);
+
       addTransaction({
-        id: Date.now(),
+        id: receipt.date,
         icon: "send",
-        label: `Envio para ${selectedContact?.name || recipient || "Desconhecido"}`,
+        label: `Envio para ${receipt.toName}`,
         sub: "Agora mesmo",
         amount: numAmount,
         positive: false,
-        category: "Transferência"
+        category: "Transferência",
+        receipt: receipt
       });
+      setStep("success");
+    } else {
+      if (isNaN(numAmount) || numAmount <= 0) {
+        alert("Valor inválido.");
+        setStep("form");
+        return;
+      }
+      setStep("success");
     }
   };
-  const handleReset = () => { setStep("form"); setAmount(""); setRecipient(""); setSelectedContact(null); setNota(""); };
+  const handleReset = () => { setStep("form"); setAmount(""); setRecipient(""); setSelectedContact(null); setNota(""); setCurrentReceipt(null); };
 
   return (
     <AnimatedLayout className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
@@ -86,26 +131,47 @@ export function TransferenciasScreen() {
       </div>
 
       {step === "success" ? (
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="mb-4">
-            <SuccessCheckmark size={80} color="#22c55e" />
-          </div>
-          <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>
-            {tab === "enviar" ? "Transferência enviada!" : "Pedido enviado!"}
-          </h2>
-          <p className="text-gray-500 text-sm text-center mb-2">
-            {tab === "enviar"
-              ? `${amount} ${wallet.currency} enviados com sucesso`
-              : `Pedido de ${amount} ${wallet.currency} enviado`}
-          </p>
-          <p className="text-gray-400 text-xs mb-8">Referência: #TRF20240501</p>
-          <button
-            onClick={handleReset}
-            className="w-full py-4 rounded-xl text-white"
-            style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
-          >
-            Nova transferência
-          </button>
+        <div className="flex-1 flex flex-col px-5 py-6 overflow-y-auto">
+          {tab === "enviar" ? (
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="mb-4">
+                <SuccessCheckmark size={80} color="#22c55e" />
+              </div>
+              <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>Transferência enviada!</h2>
+              <p className="text-gray-500 text-sm text-center mb-6">A sua transferência foi processada com sucesso.</p>
+              
+              <button
+                onClick={() => setCurrentReceipt(currentReceipt)} // Just open modal
+                className="w-full py-4 rounded-xl text-[#162456] border border-[#162456] mb-4"
+                style={{ fontWeight: 600 }}
+              >
+                Ver Comprovativo
+              </button>
+
+              <button
+                onClick={handleReset}
+                className="w-full py-4 rounded-xl text-white"
+                style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
+              >
+                Nova transferência
+              </button>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="mb-4">
+                <SuccessCheckmark size={80} color="#22c55e" />
+              </div>
+              <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>Pedido enviado!</h2>
+              <p className="text-gray-500 text-sm text-center mb-2">Pedido de {amount} {wallet.currency} enviado</p>
+              <button
+                onClick={handleReset}
+                className="w-full py-4 rounded-xl text-white mt-8"
+                style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
+              >
+                Novo pedido
+              </button>
+            </div>
+          )}
         </div>
       ) : step === "confirm" ? (
         <div className="px-5 py-5">
@@ -378,6 +444,7 @@ export function TransferenciasScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+      <ReceiptModal receipt={currentReceipt} onClose={() => setCurrentReceipt(null)} />
     </AnimatedLayout>
   );
 }

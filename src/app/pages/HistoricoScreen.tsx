@@ -4,6 +4,7 @@ import { ArrowUpRight, ArrowDownLeft, Zap, Wifi, Smartphone, Search, Filter } fr
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
+import { ReceiptModal, TransactionReceipt } from "../../components/ReceiptModal";
 
 function TxIcon({ icon }: { icon: string }) {
   const base = "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0";
@@ -20,6 +21,7 @@ const filters = ["Todas", "Transferência", "Pagamento", "Recarga", "Depósito"]
 export function HistoricoScreen() {
   const [activeFilter, setActiveFilter] = useState("Todas");
   const [search, setSearch] = useState("");
+  const [currentReceipt, setCurrentReceipt] = useState<TransactionReceipt | null>(null);
   const { transactions, wallet } = useAppStore();
 
   const filtered = transactions.filter((tx) => {
@@ -102,7 +104,10 @@ export function HistoricoScreen() {
           ) : (
             filtered.map((tx, i) => (
               <div key={tx.id}>
-                <div className="flex items-center gap-3 px-4 py-3.5">
+                <div 
+                  className={`flex items-center gap-3 px-4 py-3.5 ${tx.receipt ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""}`}
+                  onClick={() => tx.receipt && setCurrentReceipt(tx.receipt)}
+                >
                   <TxIcon icon={tx.icon} />
                   <div className="flex-1 min-w-0">
                     <p className="text-gray-800 text-sm truncate" style={{ fontWeight: 500 }}>{tx.label}</p>
@@ -133,6 +138,7 @@ export function HistoricoScreen() {
           )}
         </div>
       </div>
+      <ReceiptModal receipt={currentReceipt} onClose={() => setCurrentReceipt(null)} />
     </AnimatedLayout>
   );
 }

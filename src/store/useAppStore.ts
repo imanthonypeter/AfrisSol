@@ -1,5 +1,17 @@
 import { create } from "zustand";
 
+export interface TransactionReceipt {
+  type: string;
+  amount: number;
+  currency: string;
+  date: number;
+  reference: string;
+  fromName?: string;
+  fromAccount?: string;
+  toName?: string;
+  toAccount?: string;
+}
+
 export interface Transaction {
   id: number;
   icon: "receive" | "send" | "internet" | "electricity" | "recharge" | "other";
@@ -8,6 +20,7 @@ export interface Transaction {
   amount: number;
   positive: boolean;
   category: string;
+  receipt?: TransactionReceipt;
 }
 
 export interface Account {
