@@ -61,8 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (user) {
         try {
-          // Carregar perfil do Firestore
-          const profile = await getUser(user.uid);
+          // Carregar perfil do Firestore com retry para evitar race conditions no registo
+          let profile = await getUser(user.uid);
+          let retries = 5;
+          while (!profile && retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            profile = await getUser(user.uid);
+            retries--;
+          }
+
           if (profile) {
             updateUser({
               uid: profile.uid,
