@@ -21,8 +21,7 @@ export function CarteiraScreen() {
   const [customAccountName, setCustomAccountName] = useState("");
   const [initialTransfer, setInitialTransfer] = useState("");
   const [cvvVisible, setCvvVisible] = useState(false);
-  
-  const { user, wallet, virtualCard, accounts, transactions, createVirtualCard, setVirtualCard, addAccount, updateBalance, addTransaction } = useAppStore();
+  const { user, wallet, virtualCard, accounts, transactions, createVirtualCard, setVirtualCard, setWalletCard, addAccount, updateBalance, addTransaction } = useAppStore();
 
   const totalEntradas = transactions.filter(t => t.positive).reduce((sum, t) => sum + t.amount, 0);
   const totalSaidas = transactions.filter(t => !t.positive).reduce((sum, t) => sum + t.amount, 0);
@@ -171,28 +170,7 @@ export function CarteiraScreen() {
                     Compre online de forma segura com um cartão VISA virtual.
                   </p>
                   <button
-                    onClick={() => {
-                      setIsCreatingCard(true);
-                      setTimeout(async () => {
-                        try {
-                          if (user.uid) {
-                            const { createVirtualCardInFirestore } = await import("../../services/firestore");
-                            const cardData = await createVirtualCardInFirestore(user.uid, user.name || "TITULAR");
-                            setVirtualCard({
-                              cardNumber: cardData.cardNumber,
-                              cvv: cardData.cvv,
-                              expiryMonth: cardData.expiryMonth,
-                              expiryYear: cardData.expiryYear,
-                              holderName: cardData.holderName,
-                            });
-                          }
-                        } catch (err) {
-                          console.error("Error creating virtual card:", err);
-                        }
-                        setIsCreatingCard(false);
-                        createVirtualCard();
-                      }, 2000);
-                    }}
+                    onClick={() => navigate("/pagamentos")}
                     className="px-6 py-2.5 rounded-full text-white text-xs font-semibold active:scale-95 transition-transform"
                     style={{ background: "linear-gradient(135deg, #F47C20, #ff9543)", boxShadow: "0 4px 12px rgba(244,124,32,0.3)" }}
                   >
@@ -324,6 +302,25 @@ export function CarteiraScreen() {
                 </div>
               </div>
             </motion.div>
+          )}
+          {wallet.hasVirtualCard && (
+            <div className="flex justify-center mt-3">
+              <button 
+                onClick={() => {
+                  if (wallet.balance < 0) {
+                    alert("Não pode apagar o cartão porque o seu saldo está negativo.");
+                    return;
+                  }
+                  if (confirm("Tem certeza que deseja apagar o seu Cartão Virtual Visa?")) {
+                    setWalletCard(false);
+                    setVirtualCard(null);
+                  }
+                }}
+                className="text-xs text-red-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
+              >
+                <X size={14} /> Apagar Cartão
+              </button>
+            </div>
           )}
         </motion.div>
 

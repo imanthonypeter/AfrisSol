@@ -6,8 +6,8 @@ import { useAppStore } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion, AnimatePresence } from "framer-motion";
-import { registerUser, loginUser } from "../../services/auth";
-
+import { registerUser, loginUser, loginWithGoogle } from "../../services/auth";
+import type { User as FirebaseUser } from "firebase/auth";
 // Chave para guardar o email no localStorage
 const REMEMBER_KEY = "afrisol_remember_email";
 
@@ -23,6 +23,8 @@ export function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [bioPhase, setBioPhase] = useState<"idle" | "scanning" | "success">("idle");
+  const [googlePhoneModal, setGooglePhoneModal] = useState(false);
+  const [googleUser, setGoogleUser] = useState<FirebaseUser | null>(null);
   const { settings, setAuthenticated, updateUser, setWalletCard } = useAppStore();
 
   // Ao montar, verificar se há um email guardado no localStorage
@@ -48,6 +50,7 @@ export function AuthScreen() {
         }
         const { profile } = await registerUser(name, email, password, phone || undefined);
         updateUser({
+          uid: profile.uid,
           name: profile.name,
           email: profile.email,
           phone: profile.phone,
@@ -93,6 +96,63 @@ export function AuthScreen() {
         setError(err?.message || "Erro ao processar. Tente novamente.");
       }
     } finally {
+      setLoading(false);
+    }
+  };
+  const handleGoogleAuth = async () => {
+    if (loading) return;
+    setError("");
+    setLoading(true);
+    try {
+      const { user: firebaseUser, profile, isNewUser } = await loginWithGoogle();
+      if (isNewUser || !profile) {
+        setGoogleUser(firebaseUser);
+        setGooglePhoneModal(true);
+        setLoading(false);
+        return;
+      }
+      
+      updateUser({
+        uid: profile.uid,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+      });
+      setWalletCard(profile.hasVirtualCard || false);
+      setAuthenticated(true);
+      navigate("/home");
+    } catch (err: any) {
+      setError(err?.message || "Erro ao autenticar com Google.");
+      setLoading(false);
+    }
+  };
+
+  const submitGooglePhone = async () => {
+    if (!googleUser) return;
+    if (!phone || phone.length < 9) {
+      setError("Por favor, introduza um número de telemóvel válido.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const { createUser } = await import("../../services/firestore");
+      const profile = await createUser(googleUser.uid, {
+        name: googleUser.displayName || "Utilizador AfriSol",
+        email: googleUser.email || "",
+        phone: phone
+      });
+      updateUser({
+        uid: profile.uid,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+      });
+      setGooglePhoneModal(false);
+      setAuthenticated(true);
+      navigate("/home");
+    } catch(err: any) {
+      setError(err?.message || "Erro ao registar conta.");
       setLoading(false);
     }
   };
@@ -207,6 +267,65 @@ export function AuthScreen() {
                     </motion.div>
                   </>
                 )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal de Telemóvel para Google */}
+        <AnimatePresence>
+          {googlePhoneModal && (
+            <motion.div
+              className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              style={{ backgroundColor: "rgba(22,36,86,0.92)", backdropFilter: "blur(12px)" }}
+            >
+              <motion.div
+                className="bg-white rounded-[32px] p-8 w-full max-w-xs flex flex-col items-center text-center"
+                initial={{ scale: 0.8, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 15 }}
+                transition={{ type: "spring" as const, stiffness: 280, damping: 24 }}
+              >
+                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-4 text-blue-500">
+                  <Phone size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Quase lá!</h3>
+                <p className="text-gray-500 text-sm mb-6">
+                  Introduza o seu número de telemóvel para terminar o registo.
+                </p>
+
+                {error && (
+                  <div className="w-full mb-4 px-3 py-2 rounded-lg text-xs font-medium bg-red-50 text-red-600">
+                    {error}
+                  </div>
+                )}
+
+                <div className="w-full relative mb-6">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                    <Phone size={16} color="#9CA3AF" />
+                  </div>
+                  <input
+                    type="tel"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-800 outline-none focus:border-blue-600 transition-colors"
+                    placeholder="Ex: 923 000 000"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    style={{ fontSize: "15px" }}
+                  />
+                </div>
+
+                <button
+                  onClick={submitGooglePhone}
+                  disabled={loading}
+                  className={`w-full py-3 rounded-xl text-white shadow-md transition-all flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-wait' : 'active:scale-95'}`}
+                  style={{ background: "linear-gradient(135deg, #162456, #1a2e6e)", fontWeight: 600, fontSize: "15px" }}
+                >
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : "Concluir Registo"}
+                </button>
               </motion.div>
             </motion.div>
           )}
@@ -422,13 +541,36 @@ export function AuthScreen() {
             {tab === "login" && settings.biometrics && (
               <button
                 onClick={handleBiometrics}
-                className="w-full py-4 rounded-xl border-2 text-sm transition-all active:scale-95 hover:bg-[#162456]/5 flex items-center justify-center gap-2.5"
+                className="w-full py-4 rounded-xl border-2 text-sm transition-all active:scale-95 hover:bg-[#162456]/5 flex items-center justify-center gap-2.5 mb-2"
                 style={{ borderColor: "#162456", color: "#162456", fontWeight: 600 }}
               >
                 <Fingerprint size={20} />
                 Entrar com biometria
               </button>
             )}
+
+            {/* Divisor para botão Google */}
+            <div className="flex items-center gap-3 my-1">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-gray-400 text-sm">ou</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            {/* Continuar com Google */}
+            <button
+              onClick={handleGoogleAuth}
+              disabled={loading}
+              className="w-full py-4 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm transition-all hover:bg-gray-50 flex items-center justify-center gap-3 active:scale-95 shadow-sm"
+              style={{ fontWeight: 600 }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25C22.56 11.47 22.49 10.72 22.36 10H12V14.26H17.92C17.67 15.63 16.89 16.79 15.73 17.57V20.34H19.3C21.39 18.42 22.56 15.6 22.56 12.25Z" fill="#4285F4"/>
+                <path d="M12 23C14.97 23 17.46 22.02 19.3 20.34L15.73 17.57C14.73 18.24 13.48 18.66 12 18.66C9.13 18.66 6.71 16.72 5.84 14.13H2.15V16.99C3.96 20.59 7.69 23 12 23Z" fill="#34A853"/>
+                <path d="M5.84 14.13C5.62 13.47 5.5 12.75 5.5 12C5.5 11.25 5.62 10.53 5.84 9.87V7.01H2.15C1.41 8.49 1 10.19 1 12C1 13.81 1.41 15.51 2.15 16.99L5.84 14.13Z" fill="#FBBC05"/>
+                <path d="M12 5.34C13.62 5.34 15.06 5.89 16.2 6.98L19.38 3.8C17.46 2 14.97 1 12 1C7.69 1 3.96 3.41 2.15 7.01L5.84 9.87C6.71 7.28 9.13 5.34 12 5.34Z" fill="#EA4335"/>
+              </svg>
+              Continuar com Google
+            </button>
           </div>
 
           {/* Rodapé legal */}

@@ -104,7 +104,7 @@ export const useAppStore = create<AppState>((set) => ({
     twoFactorAuth: false,
   },
   wallet: {
-    balance: 0,
+    balance: 856000,
     currency: "AOA",
     hasVirtualCard: false,
   },

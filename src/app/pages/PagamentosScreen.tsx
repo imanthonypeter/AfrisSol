@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wifi, Zap, Droplets, Phone, Car, GraduationCap, Heart, ChevronRight, CreditCard } from "lucide-react";
+import { Wifi, Zap, Droplets, Phone, Car, GraduationCap, Heart, ChevronRight, CreditCard, Loader2, Eye, EyeOff, X } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
@@ -25,7 +25,9 @@ export function PagamentosScreen() {
   const [step, setStep] = useState<"list" | "form" | "confirm" | "success">("list");
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
-  const { wallet, updateBalance, addTransaction } = useAppStore();
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
+  const [cvvVisible, setCvvVisible] = useState(false);
+  const { wallet, virtualCard, updateBalance, addTransaction, createVirtualCard, setVirtualCard, setWalletCard } = useAppStore();
 
   const selectedService = services.find((s) => s.id === selected);
 
@@ -191,23 +193,124 @@ export function PagamentosScreen() {
       )}
 
       {step === "form" && selectedService && selectedService.id === "visa" && (
-        <div className="px-5 py-10 flex-1 flex flex-col items-center justify-center text-center">
-          <div className="mb-6 w-24 h-24 rounded-full flex items-center justify-center" style={{ background: "#E3E9F3", color: "#1a1f71" }}>
-            <CreditCard size={40} />
-          </div>
-          <h2 className="text-gray-800 mb-4" style={{ fontWeight: 700, fontSize: "22px" }}>
-            Cartão Visa AfriSol
-          </h2>
-          <p className="text-gray-600 mb-10" style={{ fontSize: "16px", lineHeight: 1.6 }}>
-            Em parceiria com a Visa, temos o seu cartao visa afrissol aqui, <span style={{ fontWeight: 800, color: "#1a1f71", fontSize: "18px" }}>GRATUITO!!!!</span>
-          </p>
-          <button
-            onClick={handleBack}
-            className="w-full py-4 rounded-xl text-white mt-auto"
-            style={{ background: "linear-gradient(135deg, #1a1f71, #111450)", fontWeight: 600, fontSize: "16px" }}
-          >
-            Voltar
-          </button>
+        <div className="px-5 py-5 flex-1 flex flex-col items-center">
+          {!wallet.hasVirtualCard ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-10 w-full">
+              <div className="mb-6 w-24 h-24 rounded-full flex items-center justify-center" style={{ background: "#E3E9F3", color: "#1a1f71" }}>
+                <CreditCard size={40} />
+              </div>
+              <h2 className="text-gray-800 mb-4" style={{ fontWeight: 700, fontSize: "22px" }}>
+                Cartão Visa AfriSol
+              </h2>
+              <p className="text-gray-600 mb-10" style={{ fontSize: "16px", lineHeight: 1.6 }}>
+                Em parceiria com a Visa, temos o seu cartao visa afrissol aqui, <span style={{ fontWeight: 800, color: "#1a1f71", fontSize: "18px" }}>GRATUITO!!!!</span>
+              </p>
+              
+              <button
+                onClick={() => {
+                  setIsCreatingCard(true);
+                  setTimeout(async () => {
+                    try {
+                      const { auth } = await import("../../services/firebase");
+                      const user = auth.currentUser;
+                      if (user?.uid) {
+                        const { createVirtualCardInFirestore } = await import("../../services/firestore");
+                        const cardData = await createVirtualCardInFirestore(user.uid, user.displayName || "TITULAR");
+                        setVirtualCard({
+                          cardNumber: cardData.cardNumber,
+                          cvv: cardData.cvv,
+                          expiryMonth: cardData.expiryMonth,
+                          expiryYear: cardData.expiryYear,
+                          holderName: cardData.holderName,
+                        });
+                      }
+                    } catch (err) {
+                      console.error("Error creating virtual card:", err);
+                    }
+                    setIsCreatingCard(false);
+                    createVirtualCard();
+                  }, 2000);
+                }}
+                disabled={isCreatingCard}
+                className={`w-full py-4 rounded-xl text-white mt-auto flex justify-center items-center gap-2 ${isCreatingCard ? 'opacity-70' : 'active:scale-95 transition-transform'}`}
+                style={{ background: "linear-gradient(135deg, #1a1f71, #111450)", fontWeight: 600, fontSize: "16px" }}
+              >
+                {isCreatingCard ? <><Loader2 size={18} className="animate-spin" /> A Criar...</> : "Criar Cartão Visa"}
+              </button>
+            </div>
+          ) : (
+            <div className="w-full flex flex-col items-center">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-[320px] rounded-2xl p-5 text-white relative overflow-hidden mt-6 shadow-xl"
+                style={{
+                  background: "linear-gradient(135deg, #162456 0%, #1a2e6e 100%)",
+                  aspectRatio: "1.586",
+                }}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F47C20] opacity-10 rounded-full -ml-8 -mb-8" />
+                
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-lg tracking-wider">VISA</span>
+                    <Wifi size={24} className="rotate-90 opacity-80" />
+                  </div>
+                  
+                  {virtualCard && (
+                    <div className="mt-4">
+                      <div className="text-white/80 text-xs mb-1">NÚMERO DO CARTÃO</div>
+                      <div className="font-mono text-lg tracking-widest">{virtualCard.cardNumber.replace(/(.{4})/g, "$1 ").trim()}</div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-end mt-4">
+                    <div>
+                      <div className="text-white/60 text-[10px] mb-0.5">TITULAR</div>
+                      <div className="font-semibold text-sm uppercase truncate max-w-[140px]">
+                        {virtualCard?.holderName || "TITULAR"}
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div>
+                        <div className="text-white/60 text-[10px] mb-0.5">VALIDADE</div>
+                        <div className="font-mono text-sm">{virtualCard?.expiryMonth || "12"}/{virtualCard?.expiryYear || "29"}</div>
+                      </div>
+                      <div className="relative">
+                        <div className="text-white/60 text-[10px] mb-0.5 flex items-center gap-1">
+                          CVV
+                          <button onClick={() => setCvvVisible(!cvvVisible)} className="text-white/80">
+                            {cvvVisible ? <EyeOff size={10} /> : <Eye size={10} />}
+                          </button>
+                        </div>
+                        <div className="font-mono text-sm">{cvvVisible ? (virtualCard?.cvv || "123") : "•••"}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <div className="flex justify-center mt-6">
+                <button 
+                  onClick={() => {
+                    if (wallet.balance < 0) {
+                      alert("Não pode apagar o cartão porque o seu saldo está negativo.");
+                      return;
+                    }
+                    if (confirm("Tem certeza que deseja apagar o seu Cartão Virtual Visa?")) {
+                      setWalletCard(false);
+                      setVirtualCard(null);
+                    }
+                  }}
+                  className="text-xs text-red-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
+                >
+                  <X size={14} /> Apagar Cartão
+                </button>
+              </div>
+
+            </div>
+          )}
         </div>
       )}
 

@@ -5,9 +5,9 @@ import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion } from "framer-motion";
 const operators = [
-  { id: "unitel", label: "Unitel", color: "#F47C20", initials: "U" },
+  { id: "unitel", label: "Unitel", color: "#F47C20", initials: "U", imgUrl: "https://www.aicep.com/wp-content/uploads/2021/09/unitel-mobile-money-1.png" },
   { id: "movicel", label: "Movicel", color: "#e53e3e", initials: "M" },
-  { id: "africel", label: "Africel", color: "#162456", initials: "A" },
+  { id: "africel", label: "Africel", color: "#162456", initials: "A", imgUrl: "https://play-lh.googleusercontent.com/RdcJFPZm-crIFYqDz9RZiKpch3GZBNcCf1_gOefvjCYezabqjAZGwP_bw_hRSzMMpA=w240-h480-rw" },
 ];
 
 const amounts = ["50", "100", "200", "300", "500", "1000"];
@@ -172,10 +172,14 @@ export function RecargasScreen() {
                       }}
                     >
                       <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
                         style={{ background: op.color }}
                       >
-                        <span className="text-white text-xs" style={{ fontWeight: 700 }}>{op.initials}</span>
+                        {op.imgUrl ? (
+                          <img src={op.imgUrl} alt={op.label} className="w-full h-full object-cover bg-white" />
+                        ) : (
+                          <span className="text-white text-xs" style={{ fontWeight: 700 }}>{op.initials}</span>
+                        )}
                       </div>
                       <span
                         className="text-xs"

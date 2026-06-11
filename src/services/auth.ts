@@ -6,6 +6,8 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  GoogleAuthProvider,
+  signInWithPopup,
   type User,
 } from "firebase/auth";
 import { auth } from "./firebase";
@@ -44,4 +46,18 @@ export async function logoutUser(): Promise<void> {
 // ─── Observador de estado de autenticação ────────────────────
 export function onAuthChange(callback: (user: User | null) => void): () => void {
   return onAuthStateChanged(auth, callback);
+}
+
+// ─── Iniciar sessão com Google ───────────────────────────────
+export async function loginWithGoogle(): Promise<{ user: User; profile: FirestoreUser | null; isNewUser: boolean }> {
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(auth, provider);
+  const profile = await getUser(result.user.uid);
+  
+  // Se não existir perfil, é um novo utilizador
+  return { 
+    user: result.user, 
+    profile, 
+    isNewUser: !profile 
+  };
 }
