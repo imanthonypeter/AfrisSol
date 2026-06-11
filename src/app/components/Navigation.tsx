@@ -96,7 +96,10 @@ export function Navigation({ isSidebar = false }: NavigationProps) {
           <div className="p-4 rounded-xl" style={{ background: "linear-gradient(160deg, #162456 0%, #1a2e6e 100%)" }}>
             <p className="text-white text-xs font-semibold mb-1">Ajuda & Suporte</p>
             <p className="text-white/70 text-xs mb-3">Precisa de assistência?</p>
-            <button className="w-full py-2 rounded-lg bg-white/20 text-white text-xs font-semibold hover:bg-white/30 transition-colors">
+            <button 
+              onClick={() => navigate("/suporte")}
+              className="w-full py-2 rounded-lg bg-white/20 text-white text-xs font-semibold hover:bg-white/30 transition-colors"
+            >
               Falar Connosco
             </button>
           </div>

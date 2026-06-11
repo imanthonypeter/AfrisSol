@@ -88,5 +88,5 @@ Este projeto é privado. Todos os direitos reservados.
 ---
 
 <p align="center">
-  <sub>Criado com ❤️ para Angola</sub>
+  <sub>Criado por António Pedro para a equipa da AfrisSol</sub>
 </p>

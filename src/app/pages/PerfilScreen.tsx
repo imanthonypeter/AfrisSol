@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
-  User, Shield, HelpCircle, Bell, ChevronRight, LogOut,
-  Edit3, Phone, Mail, MapPin, Lock, Fingerprint, Eye, MessageCircle, FileText, Star, DollarSign
+  User, DollarSign, Bell, FileText, HelpCircle, Shield, ChevronRight, LogOut, Edit3, Phone, Mail, MapPin, Lock
 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
@@ -16,11 +15,7 @@ export function PerfilScreen() {
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
   const [showCurrencySelector, setShowCurrencySelector] = useState(false);
-  const { user, settings, wallet, updateUser, updateSettings } = useAppStore();
-
-  const handleToggleBiometrics = () => {
-    updateSettings({ biometrics: !settings.biometrics });
-  };
+  const { user, wallet, updateUser } = useAppStore();
 
   const menuSections = [
     {
@@ -28,28 +23,19 @@ export function PerfilScreen() {
       items: [
         { icon: <User size={18} />, label: "Dados pessoais", sub: "Nome, telefone, email", color: "#6366f1", bg: "#EEF2FF", onClick: () => setEditMode(true) },
         { icon: <DollarSign size={18} />, label: "Moeda Principal", sub: wallet.currency, color: "#10b981", bg: "#d1fae5", onClick: () => setShowCurrencySelector(true) },
-        { icon: <Bell size={18} />, label: "Notificações", sub: "Gerir alertas e avisos", color: "#F47C20", bg: "#FFF3E0", onClick: () => toast("A abrir definições de notificações...") },
-        { icon: <Eye size={18} />, label: "Privacidade", sub: "Controle de dados", color: "#22c55e", bg: "#E8F5E9", onClick: () => toast("A abrir definições de privacidade...") },
+        { icon: <Bell size={18} />, label: "Notificações", sub: "Gerir alertas e avisos", color: "#F47C20", bg: "#FFF3E0", onClick: () => navigate("/notificacoes") },
       ],
     },
     {
       title: "Segurança",
       items: [
-        { icon: <Lock size={18} />, label: "Alterar PIN", sub: "Actualizar palavra-passe", color: "#162456", bg: "#EFF6FF", onClick: () => toast("A redirecionar para alteração de PIN...") },
-        { icon: <Fingerprint size={18} />, label: "Biometria", sub: "Digital e reconhecimento facial", color: "#8b5cf6", bg: "#F5F3FF", onClick: handleToggleBiometrics },
-        { icon: <Shield size={18} />, label: "Autenticação 2FA", sub: "Segurança adicional", color: "#ef4444", bg: "#FEF2F2", onClick: () => {
-          updateSettings({ twoFactorAuth: !settings.twoFactorAuth });
-          toast.success(settings.twoFactorAuth ? "Autenticação 2FA desactivada." : "Autenticação 2FA activada.");
-        }},
+        { icon: <Lock size={18} />, label: "Alterar PIN", sub: "Actualizar palavra-passe", color: "#162456", bg: "#EFF6FF", onClick: () => navigate("/alterar-pin") },
       ],
     },
     {
       title: "Suporte",
       items: [
-        { icon: <MessageCircle size={18} />, label: "Chat de suporte", sub: "Falar com um agente", color: "#F47C20", bg: "#FFF3E0", onClick: () => toast("A iniciar chat de suporte...") },
-        { icon: <HelpCircle size={18} />, label: "Centro de ajuda", sub: "Perguntas frequentes", color: "#6366f1", bg: "#EEF2FF", onClick: () => toast("A abrir Centro de Ajuda...") },
-        { icon: <FileText size={18} />, label: "Termos e condições", sub: "Políticas de uso", color: "#6B7280", bg: "#F3F4F6", onClick: () => navigate("/termos") },
-        { icon: <Star size={18} />, label: "Avaliar a app", sub: "Deixe a sua opinião", color: "#f59e0b", bg: "#FFFBEB", onClick: () => toast.success("A abrir a loja de aplicações...") },
+        { icon: <HelpCircle size={18} />, label: "Ajuda e Suporte", sub: "Perguntas frequentes e contactos", color: "#6366f1", bg: "#EEF2FF", onClick: () => navigate("/suporte") },
       ],
     },
   ];
@@ -66,15 +52,31 @@ export function PerfilScreen() {
         {/* Avatar & Name */}
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/30 shadow-lg">
-              <img src={logoImg} alt="Profile" className="w-full h-full object-cover" />
+            <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-white/30 shadow-lg bg-gray-200">
+              <img src={user.avatar || logoImg} alt="Profile" className="w-full h-full object-cover" />
             </div>
-            <button
-              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+            <label
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer"
               style={{ background: "#F47C20" }}
             >
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      updateUser({ avatar: reader.result as string });
+                      toast.success("Foto de perfil actualizada!");
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }} 
+              />
               <Edit3 size={11} color="white" />
-            </button>
+            </label>
           </div>
           <div className="flex-1">
             {editMode ? (
@@ -154,6 +156,7 @@ export function PerfilScreen() {
                     phone: user.phone || "",
                     email: user.email || "",
                     location: user.location || "Luanda, Angola",
+                    avatar: user.avatar || "",
                   });
                   setEditMode(false);
                   toast.success("Perfil actualizado com sucesso!");
@@ -193,14 +196,7 @@ export function PerfilScreen() {
                     <p className="text-gray-800 text-sm" style={{ fontWeight: 500 }}>{item.label}</p>
                     <p className="text-gray-400 text-xs">{item.sub}</p>
                   </div>
-                  
-                  {item.label === "Biometria" ? (
-                    <div className={`w-10 h-6 rounded-full flex items-center px-1 transition-colors ${settings.biometrics ? 'bg-green-500' : 'bg-gray-200'}`}>
-                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.biometrics ? 'translate-x-4' : 'translate-x-0'}`} />
-                    </div>
-                  ) : (
-                    <ChevronRight size={16} color="#D1D5DB" />
-                  )}
+                  <ChevronRight size={16} color="#D1D5DB" />
                 </button>
                 {i < section.items.length - 1 && <div className="h-px bg-gray-50 mx-4" />}
               </div>

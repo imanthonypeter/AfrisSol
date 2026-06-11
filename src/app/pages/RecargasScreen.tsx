@@ -14,7 +14,7 @@ const operators = [
   { id: "africel", label: "Africel", color: "#162456", initials: "A", imgUrl: "https://play-lh.googleusercontent.com/RdcJFPZm-crIFYqDz9RZiKpch3GZBNcCf1_gOefvjCYezabqjAZGwP_bw_hRSzMMpA=w240-h480-rw" },
 ];
 
-const amounts = ["50", "100", "200", "300", "500", "1000"];
+const amounts = ["200", "500", "700", "1000", "1500", "2000", "5000"];
 
 const categories = [
   { id: "telemovel", icon: <Smartphone size={22} />, label: "Telemóvel", color: "#F47C20", bg: "#FFF3E0" },
@@ -304,8 +304,8 @@ export function RecargasScreen() {
             <>
               {/* Amount */}
               <div className="bg-white rounded-2xl p-4 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-                <p className="text-gray-500 text-xs mb-3" style={{ fontWeight: 500 }}>VALOR DA RECARGA ({wallet.currency})</p>
-                <div className="grid grid-cols-3 gap-2">
+                <p className="text-gray-500 text-xs mb-3" style={{ fontWeight: 500 }}>VALOR DA RECARGA (AOA)</p>
+                <div className="grid grid-cols-3 gap-2 mb-3">
                   {amounts.map((v) => (
                     <button
                       key={v}
@@ -318,9 +318,21 @@ export function RecargasScreen() {
                         fontWeight: amount === v ? 700 : 500,
                       }}
                     >
-                      {v} {wallet.currency}
+                      {v} AOA
                     </button>
                   ))}
+                </div>
+                <div className="flex items-center gap-2 border-t pt-3 mt-1">
+                  <span className="text-gray-400 text-sm">Outro valor:</span>
+                  <input
+                    type="number"
+                    className="flex-1 outline-none text-gray-800 text-lg bg-transparent border-b pb-1 border-transparent focus:border-gray-300"
+                    placeholder="Ex: 350"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    style={{ fontWeight: 600 }}
+                  />
+                  <span className="text-gray-500 text-sm font-semibold">AOA</span>
                 </div>
               </div>
             </>
