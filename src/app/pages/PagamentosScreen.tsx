@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Wifi, Zap, Droplets, Phone, Car, GraduationCap, Heart, ChevronRight } from "lucide-react";
+import { Wifi, Zap, Droplets, Phone, Car, GraduationCap, Heart, ChevronRight, CreditCard } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion } from "framer-motion";
 
 const services = [
+  { id: "visa", icon: <CreditCard size={22} />, label: "Cartão Visa", provider: "AfriSol", color: "#1a1f71", bg: "#E3E9F3" },
   { id: "unitelmoney", icon: <img src="https://www.aicep.com/wp-content/uploads/2021/09/unitel-mobile-money-1.png" alt="Unitel Money" className="w-8 h-8 rounded-full object-cover bg-white" />, label: "Unitel Money", provider: "Unitel", color: "#F47C20", bg: "#FFF3E0" },
   { id: "afrimoney", icon: <img src="https://play-lh.googleusercontent.com/RdcJFPZm-crIFYqDz9RZiKpch3GZBNcCf1_gOefvjCYezabqjAZGwP_bw_hRSzMMpA=w240-h480-rw" alt="Afrimoney" className="w-8 h-8 rounded-xl object-cover" />, label: "Afrimoney", provider: "Africell", color: "#E00075", bg: "#FCE4EC" },
   { id: "dstv", icon: <svg viewBox="0 0 100 100" className="w-8 h-8"><rect width="100" height="100" rx="50" fill="#00A5DF"/><path d="M25,35 h20 c15,0 20,10 20,15 c0,5 -5,15 -20,15 h-20 v-30" fill="none" stroke="white" strokeWidth="8"/></svg>, label: "DStv", provider: "Multichoice Angola", color: "#162456", bg: "#EFF6FF" },
@@ -136,7 +137,7 @@ export function PagamentosScreen() {
         </div>
       )}
 
-      {step === "form" && selectedService && (
+      {step === "form" && selectedService && selectedService.id !== "visa" && (
         <div className="px-5 py-5">
           <div
             className="flex items-center gap-3 p-4 rounded-2xl mb-4"
@@ -185,6 +186,27 @@ export function PagamentosScreen() {
             style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600, fontSize: "16px" }}
           >
             Continuar
+          </button>
+        </div>
+      )}
+
+      {step === "form" && selectedService && selectedService.id === "visa" && (
+        <div className="px-5 py-10 flex-1 flex flex-col items-center justify-center text-center">
+          <div className="mb-6 w-24 h-24 rounded-full flex items-center justify-center" style={{ background: "#E3E9F3", color: "#1a1f71" }}>
+            <CreditCard size={40} />
+          </div>
+          <h2 className="text-gray-800 mb-4" style={{ fontWeight: 700, fontSize: "22px" }}>
+            Cartão Visa AfriSol
+          </h2>
+          <p className="text-gray-600 mb-10" style={{ fontSize: "16px", lineHeight: 1.6 }}>
+            Em parceiria com a Visa, temos o seu cartao visa afrissol aqui, <span style={{ fontWeight: 800, color: "#1a1f71", fontSize: "18px" }}>GRATUITO!!!!</span>
+          </p>
+          <button
+            onClick={handleBack}
+            className="w-full py-4 rounded-xl text-white mt-auto"
+            style={{ background: "linear-gradient(135deg, #1a1f71, #111450)", fontWeight: 600, fontSize: "16px" }}
+          >
+            Voltar
           </button>
         </div>
       )}
