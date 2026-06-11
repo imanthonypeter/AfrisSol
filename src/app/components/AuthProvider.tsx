@@ -1,6 +1,6 @@
 import { useEffect, useState, createContext, useContext, type ReactNode } from "react";
 import { onAuthChange } from "../../services/auth";
-import { getUser, getUserAccounts, getUserTransactions, bootstrapOldUserAccounts } from "../../services/firestore";
+import { getUser, getUserAccounts, getUserTransactions, bootstrapOldUserAccounts, getVirtualCard, createUser } from "../../services/firestore";
 import { useAppStore } from "../../store/useAppStore";
 import type { User as FirebaseUser } from "firebase/auth";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
@@ -9,9 +9,10 @@ import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
+  error: string | null;
 }
 
-const AuthContext = createContext<AuthContextType>({ firebaseUser: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ firebaseUser: null, loading: true, error: null });
 
 export function useAuth() {
   return useContext(AuthContext);
@@ -52,12 +53,14 @@ function LoadingScreen() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setAuthenticated, updateUser, setWalletCard } = useAppStore();
+  const [error, setError] = useState<string | null>(null);
+  const { setAuthenticated, updateUser, setWalletCard, setVirtualCard } = useAppStore();
 
   useEffect(() => {
     // Escutar alterações de estado de autenticação do Firebase
     const unsubscribe = onAuthChange(async (user) => {
       setFirebaseUser(user);
+      setError(null);
 
       if (user) {
         try {
@@ -70,15 +73,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             retries--;
           }
 
+          if (!profile) {
+            console.log("Perfil não encontrado (conta antiga), a criar perfil de resgate...");
+            try {
+              profile = await createUser(user.uid, {
+                name: user.displayName || "Utilizador AfriSol",
+                email: user.email || ""
+              });
+            } catch (e) {
+              console.error("Erro ao criar perfil de resgate:", e);
+            }
+          }
+
           if (profile) {
             updateUser({
               uid: profile.uid,
-              name: profile.name,
-              email: profile.email,
-              phone: profile.phone,
-              location: profile.location,
+              name: profile.name || "",
+              email: profile.email || "",
+              phone: profile.phone || "",
+              location: profile.location || "Luanda, Angola",
             });
             setWalletCard(profile.hasVirtualCard || false);
+
+            // Carregar dados do cartão virtual do Firestore
+            if (profile.hasVirtualCard) {
+              const cardData = await getVirtualCard(user.uid);
+              if (cardData) {
+                setVirtualCard({
+                  cardNumber: cardData.cardNumber,
+                  cvv: cardData.cvv,
+                  expiryMonth: cardData.expiryMonth,
+                  expiryYear: cardData.expiryYear,
+                  holderName: cardData.holderName,
+                });
+              }
+            }
 
             // Carregar contas do Firestore e atualizar saldo total
             let accounts = await getUserAccounts(user.uid);
@@ -118,8 +147,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           setAuthenticated(true);
-        } catch (err) {
+        } catch (err: any) {
           console.error("Erro ao carregar dados do utilizador:", err);
+          setError(err?.message || "Erro ao carregar dados. Tente novamente.");
           setAuthenticated(false);
         }
       } else {
@@ -145,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, loading }}>
+    <AuthContext.Provider value={{ firebaseUser, loading, error }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   User, Shield, HelpCircle, Bell, ChevronRight, LogOut,
-  Edit3, Phone, Mail, MapPin, Lock, Fingerprint, Eye, MessageCircle, FileText, Star, DollarSign, X, CheckCircle2
+  Edit3, Phone, Mail, MapPin, Lock, Fingerprint, Eye, MessageCircle, FileText, Star, DollarSign
 } from "lucide-react";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
@@ -12,12 +12,10 @@ import { toast } from "sonner";
 
 import { CurrencySelector } from "../components/CurrencySelector";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
-import { motion, AnimatePresence } from "framer-motion";
 export function PerfilScreen() {
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
   const [showCurrencySelector, setShowCurrencySelector] = useState(false);
-  const [activeFeature, setActiveFeature] = useState<{title: string, desc: string} | null>(null);
   const { user, settings, wallet, updateUser, updateSettings } = useAppStore();
 
   const handleToggleBiometrics = () => {
@@ -28,27 +26,30 @@ export function PerfilScreen() {
     {
       title: "Conta",
       items: [
-        { icon: <User size={18} />, label: "Dados pessoais", sub: "Nome, telefone, email", color: "#6366f1", bg: "#EEF2FF" },
+        { icon: <User size={18} />, label: "Dados pessoais", sub: "Nome, telefone, email", color: "#6366f1", bg: "#EEF2FF", onClick: () => setEditMode(true) },
         { icon: <DollarSign size={18} />, label: "Moeda Principal", sub: wallet.currency, color: "#10b981", bg: "#d1fae5", onClick: () => setShowCurrencySelector(true) },
-        { icon: <Bell size={18} />, label: "Notificações", sub: "Gerir alertas e avisos", color: "#F47C20", bg: "#FFF3E0" },
-        { icon: <Eye size={18} />, label: "Privacidade", sub: "Controle de dados", color: "#22c55e", bg: "#E8F5E9" },
+        { icon: <Bell size={18} />, label: "Notificações", sub: "Gerir alertas e avisos", color: "#F47C20", bg: "#FFF3E0", onClick: () => toast("A abrir definições de notificações...") },
+        { icon: <Eye size={18} />, label: "Privacidade", sub: "Controle de dados", color: "#22c55e", bg: "#E8F5E9", onClick: () => toast("A abrir definições de privacidade...") },
       ],
     },
     {
       title: "Segurança",
       items: [
-        { icon: <Lock size={18} />, label: "Alterar PIN", sub: "Actualizar palavra-passe", color: "#162456", bg: "#EFF6FF" },
+        { icon: <Lock size={18} />, label: "Alterar PIN", sub: "Actualizar palavra-passe", color: "#162456", bg: "#EFF6FF", onClick: () => toast("A redirecionar para alteração de PIN...") },
         { icon: <Fingerprint size={18} />, label: "Biometria", sub: "Digital e reconhecimento facial", color: "#8b5cf6", bg: "#F5F3FF", onClick: handleToggleBiometrics },
-        { icon: <Shield size={18} />, label: "Autenticação 2FA", sub: "Segurança adicional", color: "#ef4444", bg: "#FEF2F2" },
+        { icon: <Shield size={18} />, label: "Autenticação 2FA", sub: "Segurança adicional", color: "#ef4444", bg: "#FEF2F2", onClick: () => {
+          updateSettings({ twoFactorAuth: !settings.twoFactorAuth });
+          toast.success(settings.twoFactorAuth ? "Autenticação 2FA desactivada." : "Autenticação 2FA activada.");
+        }},
       ],
     },
     {
       title: "Suporte",
       items: [
-        { icon: <MessageCircle size={18} />, label: "Chat de suporte", sub: "Falar com um agente", color: "#F47C20", bg: "#FFF3E0" },
-        { icon: <HelpCircle size={18} />, label: "Centro de ajuda", sub: "Perguntas frequentes", color: "#6366f1", bg: "#EEF2FF" },
-        { icon: <FileText size={18} />, label: "Termos e condições", sub: "Políticas de uso", color: "#6B7280", bg: "#F3F4F6" },
-        { icon: <Star size={18} />, label: "Avaliar a app", sub: "Deixe a sua opinião", color: "#f59e0b", bg: "#FFFBEB" },
+        { icon: <MessageCircle size={18} />, label: "Chat de suporte", sub: "Falar com um agente", color: "#F47C20", bg: "#FFF3E0", onClick: () => toast("A iniciar chat de suporte...") },
+        { icon: <HelpCircle size={18} />, label: "Centro de ajuda", sub: "Perguntas frequentes", color: "#6366f1", bg: "#EEF2FF", onClick: () => toast("A abrir Centro de Ajuda...") },
+        { icon: <FileText size={18} />, label: "Termos e condições", sub: "Políticas de uso", color: "#6B7280", bg: "#F3F4F6", onClick: () => navigate("/termos") },
+        { icon: <Star size={18} />, label: "Avaliar a app", sub: "Deixe a sua opinião", color: "#f59e0b", bg: "#FFFBEB", onClick: () => toast.success("A abrir a loja de aplicações...") },
       ],
     },
   ];
@@ -79,7 +80,7 @@ export function PerfilScreen() {
             {editMode ? (
               <input
                 className="bg-white/10 text-white rounded-lg px-2 py-1 outline-none w-full mb-1"
-                value={user.name}
+                value={user.name || ""}
                 onChange={(e) => updateUser({ name: e.target.value })}
                 style={{ fontWeight: 600, fontSize: "16px" }}
               />
@@ -120,8 +121,13 @@ export function PerfilScreen() {
               {editMode ? (
                 <input
                   className="flex-1 text-gray-700 text-sm outline-none border-b border-gray-200 pb-0.5 bg-transparent"
-                  value={info.label}
+                  value={
+                    info.field === "phone" ? user.phone || "" :
+                    info.field === "email" ? user.email || "" :
+                    user.location || ""
+                  }
                   onChange={(e) => updateUser({ [info.field]: e.target.value })}
+                  placeholder={info.label}
                 />
               ) : (
                 <span className="flex-1 text-gray-700 text-sm">{info.label}</span>
@@ -136,13 +142,18 @@ export function PerfilScreen() {
                   toast.error("Utilizador não encontrado.");
                   return;
                 }
+                if (user.uid === "demo") {
+                  toast.success("Perfil actualizado localmente (Modo Demo).");
+                  setEditMode(false);
+                  return;
+                }
                 try {
                   const userRef = doc(db, "users", user.uid);
                   await updateDoc(userRef, {
-                    name: user.name,
-                    phone: user.phone,
-                    email: user.email,
-                    location: user.location,
+                    name: user.name || "",
+                    phone: user.phone || "",
+                    email: user.email || "",
+                    location: user.location || "Luanda, Angola",
                   });
                   setEditMode(false);
                   toast.success("Perfil actualizado com sucesso!");
@@ -170,7 +181,7 @@ export function PerfilScreen() {
               <div key={i}>
                 <button 
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-                  onClick={item.onClick || (() => setActiveFeature({ title: item.label, desc: item.sub }))}
+                  onClick={item.onClick}
                 >
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -246,68 +257,7 @@ export function PerfilScreen() {
         onClose={() => setShowCurrencySelector(false)} 
       />
 
-      {/* Generic Mock Feature Modal */}
-      <AnimatePresence>
-        {activeFeature && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActiveFeature(null)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            />
-            <motion.div
-              initial={{ opacity: 0, y: "100%" }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 flex flex-col"
-              style={{ height: "85vh" }}
-            >
-              <div className="flex items-center justify-between p-5 border-b border-gray-100">
-                <div>
-                  <h3 className="text-lg font-bold text-[#162456]">{activeFeature.title}</h3>
-                  <p className="text-xs text-gray-500">{activeFeature.desc}</p>
-                </div>
-                <button 
-                  onClick={() => setActiveFeature(null)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center justify-center text-center">
-                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-                  <CheckCircle2 size={40} className="text-[#F47C20]" />
-                </div>
-                <h4 className="text-xl font-bold text-gray-800 mb-3">Tudo Configurado!</h4>
-                <p className="text-sm text-gray-500 mb-8 max-w-xs leading-relaxed">
-                  Esta secção de <strong>{activeFeature.title}</strong> está temporariamente bloqueada para demonstração no seu ambiente atual, mas o seu Perfil já se encontra atualizado e seguro com os padrões da AfriSol.
-                </p>
-                
-                <div className="w-full max-w-sm space-y-3">
-                  <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
-                    <Shield size={20} className="text-green-500" />
-                    <div className="text-left">
-                      <p className="text-sm font-semibold text-gray-800">Proteção Ativa</p>
-                      <p className="text-xs text-gray-500">A sua conta está segura</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setActiveFeature(null)}
-                    className="w-full py-3.5 rounded-xl text-white font-semibold shadow-md transition-transform active:scale-95"
-                    style={{ background: "linear-gradient(135deg, #162456, #2a4090)" }}
-                  >
-                    Entendi, voltar
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+
     </AnimatedLayout>
   );
 }

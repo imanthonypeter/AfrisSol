@@ -7,6 +7,7 @@ import { PinModal } from "../components/PinModal";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { payService } from "../../services/firestore";
+import { VirtualCard } from "../components/VirtualCard";
 
 const services = [
   { id: "visa", icon: <CreditCard size={22} />, label: "Cartão Visa", provider: "AfriSol", color: "#1a1f71", bg: "#E3E9F3" },
@@ -284,106 +285,41 @@ export function PagamentosScreen() {
               </button>
             </div>
           ) : (
-            <div className="w-full flex flex-col items-center">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`w-full max-w-[320px] rounded-2xl p-5 text-white relative overflow-hidden mt-6 shadow-xl transition-all ${virtualCard?.isFrozen ? 'grayscale opacity-80' : ''}`}
-                style={{
-                  background: "linear-gradient(135deg, #162456 0%, #1a2e6e 100%)",
-                  aspectRatio: "1.586",
-                }}
-              >
-                {virtualCard?.isFrozen && (
-                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="flex items-center gap-2 text-white font-bold text-lg">
-                      <Zap size={24} className="text-blue-300" />
-                      CONGELADO
-                    </div>
-                  </div>
-                )}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10" />
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F47C20] opacity-10 rounded-full -ml-8 -mb-8" />
-                
-                <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div className="flex justify-between items-start">
-                    <span className="font-bold text-lg tracking-wider">VISA</span>
-                    <Wifi size={24} className="rotate-90 opacity-80" />
-                  </div>
-                  
-                  {virtualCard && (
-                    <div className="mt-4">
-                      <div className="text-white/80 text-xs mb-1">NÚMERO DO CARTÃO</div>
-                      <div className="font-mono text-lg tracking-widest">{virtualCard.cardNumber.replace(/(.{4})/g, "$1 ").trim()}</div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-end mt-4">
-                    <div>
-                      <div className="text-white/60 text-[10px] mb-0.5">TITULAR</div>
-                      <div className="font-semibold text-sm uppercase truncate max-w-[140px]">
-                        {virtualCard?.holderName || "TITULAR"}
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <div>
-                        <div className="text-white/60 text-[10px] mb-0.5">VALIDADE</div>
-                        <div className="font-mono text-sm">{virtualCard?.expiryMonth || "12"}/{virtualCard?.expiryYear || "29"}</div>
-                      </div>
-                      <div className="relative">
-                        <div className="text-white/60 text-[10px] mb-0.5 flex items-center gap-1">
-                          CVV
-                          <button onClick={() => setCvvVisible(!cvvVisible)} className="text-white/80">
-                            {cvvVisible ? <EyeOff size={10} /> : <Eye size={10} />}
-                          </button>
-                        </div>
-                        <div className="font-mono text-sm">{cvvVisible ? (virtualCard?.cvv || "123") : "•••"}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              <div className="flex justify-center mt-6 gap-4">
-                <button 
-                  onClick={() => {
-                    if (virtualCard) {
-                      setVirtualCard({ ...virtualCard, isFrozen: !virtualCard.isFrozen });
-                      toast.success(virtualCard.isFrozen ? "Cartão descongelado." : "Cartão congelado temporariamente.");
+            <VirtualCard 
+              onFreeze={() => {
+                if (virtualCard) {
+                  const { setVirtualCard } = useAppStore.getState();
+                  setVirtualCard({ ...virtualCard, isFrozen: !virtualCard.isFrozen });
+                  toast.success(virtualCard.isFrozen ? "Cartão descongelado." : "Cartão congelado temporariamente.");
+                }
+              }}
+              onDelete={async () => {
+                if (wallet.balance < 0) {
+                  toast.error("Não pode apagar o cartão porque o seu saldo está negativo.");
+                  return;
+                }
+                toast.warning("Tem certeza que deseja apagar o seu Cartão Virtual Visa?", {
+                  action: {
+                    label: 'Apagar',
+                    onClick: async () => {
+                      const { setWalletCard, setVirtualCard } = useAppStore.getState();
+                      setWalletCard(false);
+                      setVirtualCard(null);
+                      try {
+                        const { deleteVirtualCardFromFirestore } = await import("../../services/firestore");
+                        const { user } = useAppStore.getState();
+                        await deleteVirtualCardFromFirestore(user.uid);
+                      } catch (e) { console.error("Erro ao apagar cartão do Firestore:", e); }
+                      toast.success("Cartão apagado com sucesso.");
                     }
-                  }}
-                  className="text-xs text-blue-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
-                >
-                  <Loader2 size={14} className={virtualCard?.isFrozen ? '' : 'rotate-180'} /> {virtualCard?.isFrozen ? "Descongelar Cartão" : "Congelar Cartão"}
-                </button>
-                <button 
-                  onClick={() => {
-                    if (wallet.balance < 0) {
-                      toast.error("Não pode apagar o cartão porque o seu saldo está negativo.");
-                      return;
-                    }
-                    toast.warning("Tem certeza que deseja apagar o seu Cartão Virtual Visa?", {
-                      action: {
-                        label: 'Apagar',
-                        onClick: () => {
-                          setWalletCard(false);
-                          setVirtualCard(null);
-                          toast.success("Cartão apagado com sucesso.");
-                        }
-                      },
-                      cancel: {
-                        label: 'Cancelar',
-                        onClick: () => {}
-                      }
-                    });
-                  }}
-                  className="text-xs text-red-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
-                >
-                  <X size={14} /> Apagar Cartão
-                </button>
-              </div>
-
-            </div>
+                  },
+                  cancel: {
+                    label: 'Cancelar',
+                    onClick: () => {}
+                  }
+                });
+              }}
+            />
           )}
         </div>
       )}

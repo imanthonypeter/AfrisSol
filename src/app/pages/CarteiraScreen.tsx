@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Copy, Check, X, Wallet, Briefcase, PiggyBank, Sparkles, Loader2, Lock, Unlock, Snowflake, Trash2 } from "lucide-react";
-import logoImg from "../../assets/AfrisSol_Logo.jpeg";
+import { Eye, EyeOff, Plus, ArrowUpRight, ArrowDownLeft, Wallet, X, Briefcase, PiggyBank, Sparkles, Loader2 } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { VirtualCard } from "../components/VirtualCard";
 
 export function CarteiraScreen() {
   const navigate = useNavigate();
   const [balanceVisible, setBalanceVisible] = useState(true);
-  const [copied, setCopied] = useState(false);
 
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
@@ -21,16 +20,10 @@ export function CarteiraScreen() {
   const [accountTemplate, setAccountTemplate] = useState<"Salário" | "Despesas" | "Poupança" | "Personalizada">("Salário");
   const [customAccountName, setCustomAccountName] = useState("");
   const [initialTransfer, setInitialTransfer] = useState("");
-  const [cvvVisible, setCvvVisible] = useState(false);
-  const { user, wallet, virtualCard, accounts, transactions, setVirtualCard, setWalletCard, addAccount, updateBalance, addTransaction } = useAppStore();
+  const { wallet, virtualCard, accounts, transactions, addAccount, updateBalance, addTransaction } = useAppStore();
 
   const totalEntradas = transactions.filter(t => t.positive).reduce((sum, t) => sum + t.amount, 0);
   const totalSaidas = transactions.filter(t => !t.positive).reduce((sum, t) => sum + t.amount, 0);
-
-  const handleCopy = () => {
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleCreateAccount = () => {
     const amount = Number(initialTransfer);
@@ -171,160 +164,42 @@ export function CarteiraScreen() {
                   </button>
             </motion.div>
           ) : (
-            <motion.div
-              whileHover={{ y: -5, boxShadow: "0 12px 40px rgba(22, 36, 86, 0.45)" }}
-              className="relative rounded-2xl p-5 overflow-hidden transition-shadow mb-4"
-              style={{
-                background: "linear-gradient(135deg, rgba(22,36,86,0.9) 0%, rgba(14,24,53,0.95) 50%, rgba(26,48,112,0.9) 100%)",
-                minHeight: "190px",
-                boxShadow: "0 8px 32px rgba(22, 36, 86, 0.35)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)"
+            <VirtualCard 
+              balanceVisible={balanceVisible}
+              onFreeze={() => {
+                if (virtualCard) {
+                  const { setVirtualCard } = useAppStore.getState();
+                  setVirtualCard({ ...virtualCard, isFrozen: !virtualCard.isFrozen });
+                  toast.success(virtualCard.isFrozen ? "Cartão descongelado." : "Cartão congelado temporariamente.");
+                }
               }}
-            >
-              {/* Glassmorphism Shine */}
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-              <div className="absolute -inset-x-1/2 top-0 h-full w-[200%] bg-gradient-to-r from-transparent via-white/5 to-transparent -rotate-45 transform translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
-
-              {/* Refined Background pattern */}
-              <div
-                className="absolute inset-0 opacity-20 mix-blend-overlay"
-                style={{
-                  backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDEiLz4KPHBhdGggZD0iTTAgMEw4IDhaTTAgOEw4IDBaIiBzdHJva2U9IiNmZmYiIHN0cm9rZS1vcGFjaXR5PSIwLjA0IiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+')",
-                  backgroundSize: "24px 24px"
-                }}
-              />
-              <div
-                className="absolute inset-0 opacity-[0.2]"
-                style={{
-                  backgroundImage: "radial-gradient(circle at 100% 0%, #F47C20 0%, transparent 50%), radial-gradient(circle at 0% 100%, #6366f1 0%, transparent 50%)"
-                }}
-              />
-
-              {/* Card Header */}
-              <div className="relative flex items-start justify-between mb-5">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
-                    <img src={logoImg} alt="AfrisSol" className="w-5 h-5 object-contain rounded-md" />
-                  </div>
-                  <div>
-                    <span className="text-white text-sm" style={{ fontWeight: 700, letterSpacing: "-0.5px" }}>afris</span>
-                    <span style={{ fontSize: "14px", fontWeight: 700, color: "#F47C20", letterSpacing: "-0.5px" }}>sol</span>
-                  </div>
-                </div>
-                {/* NFC Icon */}
-                <div className="flex items-center gap-2">
-                  <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest mr-1">Virtual</span>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-80">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="white" strokeWidth="1.5" fill="none" />
-                    <path d="M12 6v12M8 9l4-3 4 3M8 15l4 3 4-3" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Card Details */}
-              <div className="relative mb-5">
-                <div className="flex items-end justify-between mb-2">
-                  <div>
-                    <p className="text-white/50 text-[10px] uppercase tracking-wider mb-1">Número do Cartão</p>
-                    <div className="flex items-center gap-3">
-                      <span className="text-white tracking-widest font-mono shadow-sm" style={{ fontWeight: 600, fontSize: "18px", textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
-                        {balanceVisible && virtualCard
-                          ? virtualCard.cardNumber.replace(/(.{4})/g, "$1 ").trim()
-                          : `•••• •••• •••• ${virtualCard ? virtualCard.cardNumber.slice(-4) : "0000"}`
-                        }
-                      </span>
-                      <button onClick={handleCopy} className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors border border-white/10">
-                        {copied ? <Check size={14} color="#4ade80" /> : <Copy size={14} color="rgba(255,255,255,0.8)" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Footer */}
-              <div className="relative flex items-end justify-between pt-3 border-t border-white/20">
-                <div className="flex gap-6">
-                  <div>
-                    <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Titular</p>
-                    <p className="text-white text-xs uppercase shadow-sm truncate max-w-[100px]" style={{ fontWeight: 600, letterSpacing: "1px" }}>{virtualCard?.holderName || user.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Validade</p>
-                    <p className="text-white text-xs font-mono shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>{virtualCard ? `${virtualCard.expiryMonth}/${virtualCard.expiryYear}` : "--/--"}</p>
-                  </div>
-                  <div>
-                    <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">CVV</p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-white text-xs font-mono shadow-sm" style={{ fontWeight: 600, letterSpacing: "1px" }}>
-                        {cvvVisible ? (virtualCard?.cvv || "---") : "***"}
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (cvvVisible) {
-                            setCvvVisible(false);
-                          } else {
-                            setCvvVisible(true);
-                            toast.info("CVV revelado. Será ocultado em 10 segundos.");
-                            setTimeout(() => setCvvVisible(false), 10000);
-                          }
-                        }}
-                        className="p-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors border border-white/10"
-                      >
-                        {cvvVisible ? <Unlock size={10} color="#4ade80" /> : <Lock size={10} color="rgba(255,255,255,0.8)" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                {/* VISA Logo Refined */}
-                <div className="pb-0.5">
-                  <span
-                    className="text-white tracking-tight"
-                    style={{ fontSize: "28px", fontWeight: 900, fontStyle: "italic", letterSpacing: "-1px", textShadow: "0 2px 10px rgba(0,0,0,0.3)" }}
-                  >
-                    VISA
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {wallet.hasVirtualCard && (
-            <div className="flex items-center justify-center gap-4 mt-2 mb-6">
-              <button 
-                onClick={() => toast.info("Cartão congelado com sucesso!")}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-50 text-blue-600 font-semibold text-xs hover:bg-blue-100 transition-colors shadow-sm"
-              >
-                <Snowflake size={14} /> Congelar Cartão
-              </button>
-              <button 
-                onClick={() => {
-                  if (wallet.balance < 0) {
-                    toast.error("Não pode apagar o cartão porque o seu saldo está negativo.");
-                    return;
-                  }
-                  toast.warning("Tem certeza que deseja apagar o seu Cartão Virtual Visa?", {
-                    action: {
-                      label: 'Apagar',
-                      onClick: () => {
-                        setWalletCard(false);
-                        setVirtualCard(null);
-                        toast.success("Cartão apagado com sucesso.");
-                      }
-                    },
-                    cancel: {
-                      label: 'Cancelar',
-                      onClick: () => {}
+              onDelete={async () => {
+                if (wallet.balance < 0) {
+                  toast.error("Não pode apagar o cartão porque o seu saldo está negativo.");
+                  return;
+                }
+                toast.warning("Tem certeza que deseja apagar o seu Cartão Virtual Visa?", {
+                  action: {
+                    label: 'Apagar',
+                    onClick: async () => {
+                      const { setWalletCard, setVirtualCard } = useAppStore.getState();
+                      setWalletCard(false);
+                      setVirtualCard(null);
+                      try {
+                        const { deleteVirtualCardFromFirestore } = await import("../../services/firestore");
+                        const { user } = useAppStore.getState();
+                        await deleteVirtualCardFromFirestore(user.uid);
+                      } catch (e) { console.error("Erro ao apagar cartão do Firestore:", e); }
+                      toast.success("Cartão apagado com sucesso.");
                     }
-                  });
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-50 text-red-500 font-semibold text-xs hover:bg-red-100 transition-colors shadow-sm"
-              >
-                <Trash2 size={14} /> Apagar Cartão
-              </button>
-            </div>
+                  },
+                  cancel: {
+                    label: 'Cancelar',
+                    onClick: () => {}
+                  }
+                });
+              }}
+            />
           )}
         </motion.div>
 

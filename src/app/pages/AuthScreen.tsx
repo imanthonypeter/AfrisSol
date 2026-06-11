@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Eye, EyeOff, Phone, Fingerprint, ShieldCheck, Mail, User, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Phone, Mail, User, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import logoImg from "../../assets/AfrisSol_Logo.jpeg";
 import { useAppStore } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
-import { SuccessCheckmark } from "../../components/SuccessCheckmark";
-import { motion, AnimatePresence } from "framer-motion";
 import { registerUser, loginUser } from "../../services/auth";
+import { useAuth } from "../components/AuthProvider";
 
 // Chave para guardar o email no localStorage
 const REMEMBER_KEY = "afrisol_remember_email";
@@ -22,8 +22,9 @@ export function AuthScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [bioPhase, setBioPhase] = useState<"idle" | "scanning" | "success">("idle");
-  const { settings, setAuthenticated, updateUser, setWalletCard } = useAppStore();
+  const [awaitingAuth, setAwaitingAuth] = useState(false);
+  const { isAuthenticated } = useAppStore();
+  const { error: authError } = useAuth();
 
   // Ao montar, verificar se há um email guardado no localStorage
   useEffect(() => {
@@ -33,6 +34,20 @@ export function AuthScreen() {
       setRememberMe(true);
     }
   }, []);
+
+  // Navigate to /home once AuthProvider has loaded all Firestore data and set isAuthenticated=true
+  useEffect(() => {
+    if (awaitingAuth) {
+      if (isAuthenticated) {
+        setLoading(false);
+        navigate("/home");
+      } else if (authError) {
+        setLoading(false);
+        setError(authError);
+        setAwaitingAuth(false);
+      }
+    }
+  }, [awaitingAuth, isAuthenticated, authError, navigate]);
 
   const handleSubmit = async () => {
     if (loading) return;
@@ -46,29 +61,14 @@ export function AuthScreen() {
           setLoading(false);
           return;
         }
-        const { profile } = await registerUser(name, email, password, phone || undefined);
-        updateUser({
-          uid: profile.uid,
-          name: profile.name,
-          email: profile.email,
-          phone: profile.phone,
-        });
+        await registerUser(name, email, password, phone || undefined);
       } else {
         if (!email || !password) {
           setError("Introduza o email e a palavra-passe.");
           setLoading(false);
           return;
         }
-        const { profile } = await loginUser(email, password, rememberMe);
-        if (profile) {
-          updateUser({
-            uid: profile.uid,
-            name: profile.name,
-            email: profile.email,
-            phone: profile.phone,
-          });
-          setWalletCard(profile.hasVirtualCard || false);
-        }
+        await loginUser(email, password, rememberMe);
       }
 
       // Guardar ou remover email conforme a opção "Lembrar-me"
@@ -78,8 +78,12 @@ export function AuthScreen() {
         localStorage.removeItem(REMEMBER_KEY);
       }
 
-      setAuthenticated(true);
-      navigate("/home");
+      // Don't manually setAuthenticated or navigate here.
+      // The AuthProvider's onAuthChange listener will:
+      // 1. Load user profile, accounts, balance, and transactions from Firestore
+      // 2. Set isAuthenticated=true AFTER all data is loaded
+      // This ensures the balance is available when the user lands on /home.
+      setAwaitingAuth(true);
     } catch (err: any) {
       const code = err?.code || "";
       if (code === "auth/email-already-in-use") {
@@ -93,124 +97,13 @@ export function AuthScreen() {
       } else {
         setError(err?.message || "Erro ao processar. Tente novamente.");
       }
-    } finally {
       setLoading(false);
     }
   };
-  // Simular autenticação biométrica
-  const handleBiometrics = () => {
-    setBioPhase("scanning");
-    setTimeout(() => {
-      setBioPhase("success");
-      setTimeout(() => {
-        setAuthenticated(true);
-        navigate("/home");
-      }, 1500);
-    }, 2000);
-  };
-
-  // Cancelar biometria
-  const cancelBio = () => setBioPhase("idle");
 
   return (
     <AnimatedLayout>
       <div className="h-full flex flex-col overflow-y-auto" style={{ background: "#F5F7FA" }}>
-        {/* Sobreposição de autenticação biométrica */}
-        <AnimatePresence>
-          {bioPhase !== "idle" && (
-            <motion.div
-              className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              style={{ backgroundColor: "rgba(22,36,86,0.92)", backdropFilter: "blur(12px)" }}
-            >
-              <motion.div
-                className="bg-white rounded-[32px] p-8 w-full max-w-xs flex flex-col items-center text-center"
-                initial={{ scale: 0.8, opacity: 0, y: 30 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 15 }}
-                transition={{ type: "spring" as const, stiffness: 280, damping: 24 }}
-              >
-                {bioPhase === "scanning" ? (
-                  <>
-                    {/* Animação de leitura biométrica */}
-                    <div className="relative w-24 h-24 mb-6">
-                      {/* Anel pulsante */}
-                      <motion.div
-                        className="absolute inset-0 rounded-full"
-                        style={{ border: "3px solid rgba(244,124,32,0.3)" }}
-                        animate={{ scale: [1, 1.25, 1], opacity: [0.6, 0, 0.6] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                      {/* Anel rotativo */}
-                      <motion.div
-                        className="absolute inset-0 rounded-full"
-                        style={{ border: "3px solid #F47C20" }}
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                      >
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#F47C20]" />
-                      </motion.div>
-                      {/* Ícone de impressão digital */}
-                      <motion.div
-                        className="absolute inset-0 flex items-center justify-center"
-                        animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        <Fingerprint size={40} color="#F47C20" strokeWidth={1.5} />
-                      </motion.div>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">A verificar identidade</h3>
-                    <p className="text-gray-500 text-sm mb-6">
-                      Toque no sensor de impressão digital ou olhe para a câmara
-                    </p>
-                    {/* Barra de progresso */}
-                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-6">
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ background: "linear-gradient(90deg, #F47C20, #e06010)" }}
-                        initial={{ width: "0%" }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 2, ease: "easeInOut" }}
-                      />
-                    </div>
-                    <button
-                      onClick={cancelBio}
-                      className="text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {/* Estado de sucesso */}
-                    <motion.div
-                      className="mb-4"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring" as const, stiffness: 200, damping: 15 }}
-                    >
-                      <SuccessCheckmark size={80} color="#22c55e" />
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <div className="flex items-center justify-center gap-1.5 mb-2">
-                        <ShieldCheck size={18} color="#22c55e" />
-                        <h3 className="text-xl font-bold text-gray-800">Identidade confirmada</h3>
-                      </div>
-                      <p className="text-gray-500 text-sm">A entrar na sua conta...</p>
-                    </motion.div>
-                  </>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Cabeçalho */}
         <div
@@ -410,25 +303,6 @@ export function AuthScreen() {
             </button>
 
             {/* Divisor */}
-            {tab === "login" && (
-              <div className="flex items-center gap-3 my-2">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-gray-400 text-sm">ou</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-            )}
-
-            {/* Botão biométrico (apenas se activado nas definições) */}
-            {tab === "login" && settings.biometrics && (
-              <button
-                onClick={handleBiometrics}
-                className="w-full py-4 rounded-xl border-2 text-sm transition-all active:scale-95 hover:bg-[#162456]/5 flex items-center justify-center gap-2.5 mb-2"
-                style={{ borderColor: "#162456", color: "#162456", fontWeight: 600 }}
-              >
-                <Fingerprint size={20} />
-                Entrar com biometria
-              </button>
-            )}
           </div>
 
           {/* Rodapé legal */}

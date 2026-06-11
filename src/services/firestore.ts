@@ -6,6 +6,7 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -231,6 +232,12 @@ export async function getVirtualCard(uid: string): Promise<VirtualCard | null> {
   return snap.exists() ? (snap.data() as VirtualCard) : null;
 }
 
+// Apagar cartão virtual do Firestore
+export async function deleteVirtualCardFromFirestore(uid: string): Promise<void> {
+  await deleteDoc(doc(db, "users", uid, "virtualCard", "visa"));
+  await updateDoc(doc(db, "users", uid), { hasVirtualCard: false });
+}
+
 // ─── Gestão de Contas Bancárias ──────────────────────────────
 export interface FirestoreAccount {
   id?: string;
@@ -449,8 +456,8 @@ export interface FirestoreTransaction {
 // Obter transacções de um utilizador (enviadas e recebidas)
 export async function getUserTransactions(uid: string): Promise<FirestoreTransaction[]> {
   // Obter transacções onde o utilizador é remetente OU destinatário
-  const sentQ = query(collection(db, "transactions"), where("senderUserId", "==", uid), orderBy("createdAt", "desc"));
-  const recvQ = query(collection(db, "transactions"), where("receiverUserId", "==", uid), orderBy("createdAt", "desc"));
+  const sentQ = query(collection(db, "transactions"), where("senderUserId", "==", uid));
+  const recvQ = query(collection(db, "transactions"), where("receiverUserId", "==", uid));
 
   const [sentSnap, recvSnap] = await Promise.all([getDocs(sentQ), getDocs(recvQ)]);
 
