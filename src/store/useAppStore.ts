@@ -14,7 +14,7 @@ export interface TransactionReceipt {
 
 export interface Transaction {
   id: number;
-  icon: "receive" | "send" | "internet" | "electricity" | "recharge" | "other";
+  icon: string;
   label: string;
   sub: string;
   amount: number;
@@ -58,6 +58,7 @@ export interface VirtualCardData {
   expiryMonth: string;
   expiryYear: string;
   holderName: string;
+  isFrozen?: boolean;
 }
 
 export interface AppState {
@@ -104,7 +105,7 @@ export const useAppStore = create<AppState>((set) => ({
     twoFactorAuth: false,
   },
   wallet: {
-    balance: 856000,
+    balance: 0,
     currency: "AOA",
     hasVirtualCard: false,
   },

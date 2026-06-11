@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { Smartphone, Tv, Wifi, Car, ChevronRight } from "lucide-react";
+import { Smartphone, Tv, Wifi, Car, ChevronRight, Loader2 } from "lucide-react";
 import { useAppStore } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
+import { PinModal } from "../components/PinModal";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { payService } from "../../services/firestore";
+
 const operators = [
   { id: "unitel", label: "Unitel", color: "#F47C20", initials: "U", imgUrl: "https://www.aicep.com/wp-content/uploads/2021/09/unitel-mobile-money-1.png" },
   { id: "movicel", label: "Movicel", color: "#e53e3e", initials: "M" },
@@ -21,26 +25,75 @@ const categories = [
 
 export function RecargasScreen() {
   const [category, setCategory] = useState("telemovel");
-  const [operator, setOperator] = useState("vodacom");
+  const [operator, setOperator] = useState("unitel");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
-  const [step, setStep] = useState<"form" | "confirm" | "success">("form");
-  const { wallet, updateBalance, addTransaction } = useAppStore();
+  const [step, setStep] = useState<"form" | "confirm" | "processing" | "success">("form");
+  const [isPinOpen, setIsPinOpen] = useState(false);
+  const [transactionRef, setTransactionRef] = useState("");
+  const { wallet, updateBalance, addTransaction, user } = useAppStore();
+
+  const numAmount = parseFloat(amount);
+  const isAmountValid = !isNaN(numAmount) && numAmount > 0;
+  const isPhoneValid = phone.replace(/\s/g, "").length >= 9;
+  const hasSufficientBalance = isAmountValid && numAmount <= wallet.balance;
+
+  const handleConfirmStep = () => {
+    if (!isAmountValid) {
+      toast.error("Por favor, selecione um valor válido.");
+      return;
+    }
+    if (category === "telemovel" && !isPhoneValid) {
+      toast.error("Insira um número de telemóvel válido (9 dígitos).");
+      return;
+    }
+    if (!hasSufficientBalance) {
+      toast.error("Saldo insuficiente para esta recarga.");
+      return;
+    }
+    setStep("confirm");
+  };
 
   const handlePay = () => {
-    setStep("success");
-    const numAmount = parseFloat(amount);
-    if (!isNaN(numAmount) && numAmount > 0) {
-      updateBalance(-numAmount);
-      addTransaction({
-        id: Date.now(),
-        icon: "recharge",
-        label: `Recarga ${operators.find((o) => o.id === operator)?.label || "Telemóvel"}`,
-        sub: `+244 ${phone}`,
-        amount: numAmount,
-        positive: false,
-        category: "Recarga"
-      });
+    setIsPinOpen(true);
+  };
+
+  const handlePinConfirm = async (_pin: string) => {
+    setIsPinOpen(false);
+    setStep("processing");
+
+    try {
+      if (!user.uid) {
+        throw new Error("Utilizador não autenticado.");
+      }
+
+      const operatorLabel = operators.find((o) => o.id === operator)?.label || "Operadora";
+      const description = category === "telemovel"
+        ? `Recarga ${operatorLabel}`
+        : `Recarga ${categories.find(c => c.id === category)?.label || "Serviço"}`;
+
+      const result = await payService(user.uid, description, phone || "N/A", numAmount);
+
+      if (result.success) {
+        updateBalance(-numAmount);
+        addTransaction({
+          id: Date.now(),
+          icon: "recharge",
+          label: description,
+          sub: category === "telemovel" ? `+244 ${phone}` : "Agora mesmo",
+          amount: numAmount,
+          positive: false,
+          category: "Recarga",
+        });
+        setTransactionRef(result.transactionId || `REC${Math.floor(Math.random() * 1000000)}`);
+        setStep("success");
+      } else {
+        toast.error(result.message);
+        setStep("confirm");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Ocorreu um erro na recarga.");
+      setStep("confirm");
     }
   };
 
@@ -54,7 +107,7 @@ export function RecargasScreen() {
         <div className="flex items-center gap-3 mb-1">
           {step !== "form" && (
             <button
-              onClick={() => setStep(step === "confirm" ? "form" : "form")}
+              onClick={() => setStep(step === "confirm" || step === "processing" ? "form" : "form")}
               className="text-white/70"
             >
               <ChevronRight size={20} className="rotate-180" />
@@ -71,8 +124,8 @@ export function RecargasScreen() {
             <SuccessCheckmark size={80} color="#22c55e" />
           </div>
           <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>Recarga efectuada!</h2>
-          <p className="text-gray-500 text-sm text-center mb-2">{amount} {wallet.currency} carregados em +244 {phone}</p>
-          <p className="text-gray-400 text-xs mb-8">Referência: #REC20240501</p>
+          <p className="text-gray-500 text-sm text-center mb-2">{amount} {wallet.currency} carregados{category === "telemovel" ? ` em +244 ${phone}` : ""}</p>
+          <p className="text-gray-400 text-xs mb-8">Referência: {transactionRef}</p>
           <button
             onClick={() => { setStep("form"); setAmount(""); setPhone(""); }}
             className="w-full py-4 rounded-xl text-white"
@@ -81,15 +134,22 @@ export function RecargasScreen() {
             Nova recarga
           </button>
         </div>
+      ) : step === "processing" ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <Loader2 size={48} className="animate-spin text-[#F47C20] mb-4" />
+          <p className="text-gray-600 font-semibold">A processar recarga...</p>
+          <p className="text-gray-400 text-xs mt-1">Aguarde um momento</p>
+        </div>
       ) : step === "confirm" ? (
         <div className="px-5 py-5">
           <div className="bg-white rounded-2xl p-5 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
             <h3 className="text-gray-700 mb-4" style={{ fontWeight: 600 }}>Confirmar recarga</h3>
             {[
               { label: "Operadora", value: operators.find((o) => o.id === operator)?.label || "" },
-              { label: "Número", value: `+244 ${phone}` },
+              ...(category === "telemovel" ? [{ label: "Número", value: `+244 ${phone}` }] : []),
+              { label: "Categoria", value: categories.find(c => c.id === category)?.label || "" },
               { label: "Valor", value: `${amount} ${wallet.currency}` },
-              { label: "Bónus", value: `0 ${wallet.currency}` },
+              { label: "Taxa", value: `0,00 ${wallet.currency}` },
               { label: "Total", value: `${amount} ${wallet.currency}` },
             ].map((row) => (
               <div key={row.label} className="flex justify-between py-2.5 border-b border-gray-50 last:border-0">
@@ -199,13 +259,16 @@ export function RecargasScreen() {
                   <span className="text-gray-400 text-sm">+244</span>
                   <div className="w-px h-5 bg-gray-200" />
                   <input
-                    className="flex-1 outline-none text-gray-800 text-lg bg-transparent"
+                    className={`flex-1 outline-none text-gray-800 text-lg bg-transparent border-b pb-1 ${phone && !isPhoneValid ? 'border-red-400' : 'border-transparent'}`}
                     placeholder="923 XXX XXX"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     style={{ fontWeight: 600 }}
                   />
                 </div>
+                {phone && !isPhoneValid && (
+                  <p className="text-red-500 text-xs mt-1">Número inválido (mínimo 9 dígitos).</p>
+                )}
               </div>
             </>
           )}
@@ -263,15 +326,29 @@ export function RecargasScreen() {
             </>
           )}
 
+          {/* Inline balance warning */}
+          {isAmountValid && !hasSufficientBalance && (
+            <p className="text-red-500 text-xs mb-3 px-1">
+              Saldo insuficiente. (Saldo actual: {wallet.balance.toLocaleString("pt-AO")} {wallet.currency})
+            </p>
+          )}
+
           <button
-            onClick={() => { if (amount && (phone || category !== "telemovel")) setStep("confirm"); }}
-            className="w-full py-4 rounded-xl text-white"
+            onClick={handleConfirmStep}
+            disabled={!isAmountValid || !hasSufficientBalance || (category === "telemovel" && !isPhoneValid)}
+            className="w-full py-4 rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600, fontSize: "16px" }}
           >
             Recarregar
           </button>
         </div>
       )}
+
+      <PinModal 
+        isOpen={isPinOpen} 
+        onClose={() => setIsPinOpen(false)} 
+        onConfirm={handlePinConfirm} 
+      />
     </AnimatedLayout>
   );
 }

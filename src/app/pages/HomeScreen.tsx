@@ -11,11 +11,16 @@ import { formatCurrency, convertAmount } from "../../utils/currency";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { motion, AnimatePresence } from "framer-motion";
 function TxIcon({ icon }: { icon: string }) {
-  const base = "w-10 h-10 rounded-full flex items-center justify-center";
+  const base = "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0";
   if (icon === "receive") return <div className={base} style={{ background: "#E8F5E9" }}><ArrowDownLeft size={18} color="#22c55e" /></div>;
   if (icon === "internet") return <div className={base} style={{ background: "#EEF2FF" }}><Wifi size={18} color="#6366f1" /></div>;
   if (icon === "send") return <div className={base} style={{ background: "#FFF3E0" }}><ArrowUpRight size={18} color="#F47C20" /></div>;
   if (icon === "electricity") return <div className={base} style={{ background: "#FFF3E0" }}><Zap size={18} color="#F47C20" /></div>;
+  if (icon === "recharge") return <div className={base} style={{ background: "#EEF2FF" }}><Zap size={18} color="#6366f1" /></div>;
+  if (icon === "unitelmoney") return <div className={base} style={{ background: "#FFF3E0" }}><img src="https://www.aicep.com/wp-content/uploads/2021/09/unitel-mobile-money-1.png" alt="Unitel Money" className="w-8 h-8 rounded-full object-cover bg-white" /></div>;
+  if (icon === "afrimoney") return <div className={base} style={{ background: "#FCE4EC" }}><img src="https://play-lh.googleusercontent.com/RdcJFPZm-crIFYqDz9RZiKpch3GZBNcCf1_gOefvjCYezabqjAZGwP_bw_hRSzMMpA=w240-h480-rw" alt="Afrimoney" className="w-8 h-8 rounded-xl object-cover" /></div>;
+  if (icon === "dstv") return <div className={base} style={{ background: "#EFF6FF" }}><svg viewBox="0 0 100 100" className="w-8 h-8"><rect width="100" height="100" rx="50" fill="#00A5DF"/><path d="M25,35 h20 c15,0 20,10 20,15 c0,5 -5,15 -20,15 h-20 v-30" fill="none" stroke="white" strokeWidth="8"/></svg></div>;
+  if (icon === "tv") return <div className={base} style={{ background: "#F5F3FF" }}><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS49lQrzJySNWgElAyAXHDWy721oXRSoOg12A&s" alt="TV Cabo" className="w-8 h-8 rounded-full object-cover" /></div>;
   return <div className={base} style={{ background: "#F3F4F6" }}><MoreHorizontal size={18} color="#6B7280" /></div>;
 }
 

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ArrowUpRight, ArrowDownLeft, Zap, Wifi, Smartphone, Search, Filter } from "lucide-react";
+import { AreaChart, Area, Tooltip, ResponsiveContainer } from "recharts";
 
 import { useAppStore } from "../../store/useAppStore";
 import { formatCurrency, convertAmount } from "../../utils/currency";
@@ -13,6 +14,10 @@ function TxIcon({ icon }: { icon: string }) {
   if (icon === "send") return <div className={base} style={{ background: "#FFF3E0" }}><ArrowUpRight size={18} color="#F47C20" /></div>;
   if (icon === "electricity") return <div className={base} style={{ background: "#FFF3E0" }}><Zap size={18} color="#F47C20" /></div>;
   if (icon === "recharge") return <div className={base} style={{ background: "#EEF2FF" }}><Smartphone size={18} color="#6366f1" /></div>;
+  if (icon === "unitelmoney") return <div className={base} style={{ background: "#FFF3E0" }}><img src="https://www.aicep.com/wp-content/uploads/2021/09/unitel-mobile-money-1.png" alt="Unitel Money" className="w-8 h-8 rounded-full object-cover bg-white" /></div>;
+  if (icon === "afrimoney") return <div className={base} style={{ background: "#FCE4EC" }}><img src="https://play-lh.googleusercontent.com/RdcJFPZm-crIFYqDz9RZiKpch3GZBNcCf1_gOefvjCYezabqjAZGwP_bw_hRSzMMpA=w240-h480-rw" alt="Afrimoney" className="w-8 h-8 rounded-xl object-cover" /></div>;
+  if (icon === "dstv") return <div className={base} style={{ background: "#EFF6FF" }}><svg viewBox="0 0 100 100" className="w-8 h-8"><rect width="100" height="100" rx="50" fill="#00A5DF"/><path d="M25,35 h20 c15,0 20,10 20,15 c0,5 -5,15 -20,15 h-20 v-30" fill="none" stroke="white" strokeWidth="8"/></svg></div>;
+  if (icon === "tv") return <div className={base} style={{ background: "#F5F3FF" }}><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS49lQrzJySNWgElAyAXHDWy721oXRSoOg12A&s" alt="TV Cabo" className="w-8 h-8 rounded-full object-cover" /></div>;
   return <div className={base} style={{ background: "#F3F4F6" }}><ArrowUpRight size={18} color="#6B7280" /></div>;
 }
 
@@ -32,6 +37,15 @@ export function HistoricoScreen() {
 
   const totalIn = transactions.filter((t) => t.positive).reduce((acc, t) => acc + t.amount, 0);
   const totalOut = transactions.filter((t) => !t.positive).reduce((acc, t) => acc + t.amount, 0);
+
+  // Preparar dados para o gráfico (últimas despesas)
+  const chartData = useMemo(() => {
+    const expenses = transactions.filter(t => !t.positive).slice(0, 10).reverse();
+    return expenses.map(t => ({
+      name: t.sub.split(" ")[0] || "Recente", // apenas o dia ou "Recente"
+      valor: t.amount
+    }));
+  }, [transactions]);
 
   return (
     <AnimatedLayout className="h-full flex flex-col overflow-hidden" style={{ background: "#F5F7FA" }}>
@@ -66,6 +80,31 @@ export function HistoricoScreen() {
           />
         </div>
       </div>
+
+      {/* Expense Chart */}
+      {chartData.length > 0 && (
+        <div className="px-5 mt-4 mb-2">
+          <p className="text-gray-500 text-xs font-semibold mb-2">Evolução de Despesas</p>
+          <div className="h-32 w-full bg-white rounded-xl p-2" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Tooltip 
+                  formatter={(value: number) => formatCurrency(convertAmount(value, "AOA", wallet.currency), wallet.currency)}
+                  labelStyle={{ color: '#6B7280', fontSize: '12px' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+                <Area type="monotone" dataKey="valor" stroke="#EF4444" fillOpacity={1} fill="url(#colorValor)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Filter pills */}
       <div className="flex gap-2 px-5 py-3 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: "none" }}>

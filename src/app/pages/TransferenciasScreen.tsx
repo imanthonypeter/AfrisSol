@@ -3,8 +3,11 @@ import { ArrowUpRight, ArrowDownLeft, Search, ChevronRight, Check, Plus, UserPlu
 import { useAppStore, Contact } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
+import { PinModal } from "../components/PinModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReceiptModal, TransactionReceipt } from "../../components/ReceiptModal";
+import { toast } from "sonner";
+import { transferMoney, addContact as addContactToFirestore } from "../../services/firestore";
 export function TransferenciasScreen() {
   const [tab, setTab] = useState<"enviar" | "receber">("enviar");
   const [amount, setAmount] = useState("");
@@ -16,9 +19,11 @@ export function TransferenciasScreen() {
   const [newPhone, setNewPhone] = useState("");
   const [nota, setNota] = useState("");
   const [currentReceipt, setCurrentReceipt] = useState<TransactionReceipt | null>(null);
-  const { wallet, contacts, addContact, updateBalance, addTransaction } = useAppStore();
+  const [isPinOpen, setIsPinOpen] = useState(false);
+  const [isTransferring, setIsTransferring] = useState(false);
+  const { wallet, contacts, addContact, updateBalance, addTransaction, user, accounts } = useAppStore();
 
-  const handleAddContact = () => {
+  const handleAddContact = async () => {
     if (!newName || !newPhone) return;
     const initials = newName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
     const colors = ["#6366f1", "#F47C20", "#22c55e", "#ec4899", "#8b5cf6", "#f59e0b"];
@@ -29,20 +34,37 @@ export function TransferenciasScreen() {
       initials,
       color: colors[Math.floor(Math.random() * colors.length)]
     };
+    
+    // Optimistic UI update
     addContact(newContact);
     setIsAddingContact(false);
+    setSelectedContact(newContact);
+    
+    // Save to Firestore
+    try {
+      if (user.uid) {
+        await addContactToFirestore(user.uid, {
+          name: newContact.name,
+          phone: newContact.phone,
+          initials: newContact.initials,
+          color: newContact.color
+        });
+      }
+    } catch (e) {
+      console.error("Erro ao guardar contacto", e);
+    }
+    
     setNewName("");
     setNewPhone("");
-    setSelectedContact(newContact);
   };
 
   const handleSend = () => {
     if (!amount) {
-      alert("Por favor, insira um valor.");
+      toast.error("Por favor, insira um valor.");
       return;
     }
     if (tab === "enviar" && !recipient && !selectedContact) {
-      alert("Por favor, selecione ou digite um destinatário.");
+      toast.error("Por favor, selecione ou digite um destinatário.");
       return;
     }
     setStep("confirm");
@@ -53,50 +75,74 @@ export function TransferenciasScreen() {
     
     if (tab === "enviar") {
       if (isNaN(numAmount) || numAmount <= 0) {
-        alert("Valor inválido.");
+        toast.error("Valor inválido.");
         setStep("form");
         return;
       }
       if (numAmount > wallet.balance) {
-        alert("Saldo insuficiente.");
+        toast.error("Saldo insuficiente.");
         setStep("form");
         return;
       }
 
-      updateBalance(-numAmount);
-      
-      const receipt: TransactionReceipt = {
-        type: "Transferência",
-        amount: numAmount,
-        currency: wallet.currency,
-        date: Date.now(),
-        reference: `TRF${Math.floor(Math.random() * 100000000)}`,
-        fromName: "João Macuácua",
-        fromAccount: "Banco AfriSol",
-        toName: selectedContact?.name || recipient || "Desconhecido",
-        toAccount: `${(selectedContact?.phone || recipient || "").startsWith("AO") ? "IBAN" : "Contacto"}: ${selectedContact?.phone || recipient || "N/A"}`,
-      };
-
-      setCurrentReceipt(receipt);
-
-      addTransaction({
-        id: receipt.date,
-        icon: "send",
-        label: `Envio para ${receipt.toName}`,
-        sub: "Agora mesmo",
-        amount: numAmount,
-        positive: false,
-        category: "Transferência",
-        receipt: receipt
-      });
-      setStep("success");
+      setIsPinOpen(true);
     } else {
       if (isNaN(numAmount) || numAmount <= 0) {
-        alert("Valor inválido.");
+        toast.error("Valor inválido.");
         setStep("form");
         return;
       }
       setStep("success");
+    }
+  };
+
+  const handlePinConfirm = async (_pin: string) => {
+    setIsPinOpen(false);
+    setIsTransferring(true);
+    const numAmount = parseFloat(amount);
+    
+    try {
+      const targetIdentifier = selectedContact?.phone || recipient;
+      const result = await transferMoney(user.uid, targetIdentifier, numAmount, nota);
+      
+      if (result.success) {
+        updateBalance(-numAmount);
+        
+        const receipt: TransactionReceipt = {
+          type: "Transferência",
+          amount: numAmount,
+          currency: wallet.currency,
+          date: Date.now(),
+          reference: result.transactionId || `TRF${Math.floor(Math.random() * 100000000)}`,
+          fromName: user.name || "Utilizador AfriSol",
+          fromAccount: accounts.length > 0 ? accounts[0].label : "Banco AfriSol",
+          toName: selectedContact?.name || recipient || "Desconhecido",
+          toAccount: `${targetIdentifier.startsWith("AO") ? "IBAN" : "Contacto"}: ${targetIdentifier}`,
+        };
+
+        setCurrentReceipt(receipt);
+
+        addTransaction({
+          id: receipt.date,
+          icon: "send",
+          label: `Envio para ${receipt.toName}`,
+          sub: "Agora mesmo",
+          amount: numAmount,
+          positive: false,
+          category: "Transferência",
+          receipt: receipt
+        });
+        
+        setStep("success");
+      } else {
+        toast.error(result.message);
+        setStep("form");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Ocorreu um erro na transferência.");
+      setStep("form");
+    } finally {
+      setIsTransferring(false);
     }
   };
   const handleReset = () => { setStep("form"); setAmount(""); setRecipient(""); setSelectedContact(null); setNota(""); setCurrentReceipt(null); };
@@ -164,11 +210,15 @@ export function TransferenciasScreen() {
               <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>Pedido enviado!</h2>
               <p className="text-gray-500 text-sm text-center mb-2">Pedido de {amount} {wallet.currency} enviado</p>
               <button
-                onClick={handleReset}
-                className="w-full py-4 rounded-xl text-white mt-8"
+                onClick={() => setStep("confirm")}
+                disabled={
+                  !amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0 || parseFloat(amount) > wallet.balance ||
+                  !amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0
+                }
+                className="w-full py-4 rounded-xl text-white mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
               >
-                Novo pedido
+                Continuar
               </button>
             </div>
           )}
@@ -204,10 +254,11 @@ export function TransferenciasScreen() {
             </button>
             <button
               onClick={handleConfirm}
-              className="flex-1 py-4 rounded-xl text-white text-sm"
+              disabled={isTransferring}
+              className={`flex-1 py-4 rounded-xl text-white text-sm ${isTransferring ? 'opacity-70' : ''}`}
               style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
             >
-              Confirmar
+              {isTransferring ? "A processar..." : "Confirmar"}
             </button>
           </div>
         </div>
@@ -218,7 +269,7 @@ export function TransferenciasScreen() {
               {/* Amount */}
               <div className="bg-white rounded-2xl p-5 mb-4" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
                 <label className="text-gray-500 text-xs mb-2 block" style={{ fontWeight: 500 }}>VALOR A ENVIAR</label>
-                <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 border-b-2 pb-1 ${amount && (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) ? 'border-red-400' : 'border-transparent'}`}>
                   <input
                     type="number"
                     className="flex-1 outline-none text-gray-800 bg-transparent"
@@ -229,6 +280,12 @@ export function TransferenciasScreen() {
                   />
                   <span className="text-gray-400 text-lg" style={{ fontWeight: 500 }}>{wallet.currency}</span>
                 </div>
+                {amount && (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) && (
+                  <p className="text-red-500 text-xs mt-1">Insira um valor válido e maior que zero.</p>
+                )}
+                {amount && parseFloat(amount) > wallet.balance && (
+                  <p className="text-red-500 text-xs mt-1">Saldo insuficiente. (Saldo actual: {wallet.balance} {wallet.currency})</p>
+                )}
                 <div className="flex gap-2 mt-3">
                   {["500", "1.000", "2.500", "5.000"].map((v) => (
                     <button
@@ -248,12 +305,18 @@ export function TransferenciasScreen() {
                 <div className="relative mb-4">
                   <Search size={16} color="#9CA3AF" className="absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
-                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-gray-50 text-sm text-gray-700 outline-none border border-gray-100 focus:border-blue-300"
+                    className={`w-full pl-9 pr-4 py-3 rounded-xl bg-gray-50 text-sm text-gray-700 outline-none border ${recipient && recipient.length < 3 ? 'border-red-300' : 'border-gray-100'} focus:border-blue-300`}
                     placeholder="Nome, telefone ou IBAN"
                     value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
+                    onChange={(e) => {
+                      setRecipient(e.target.value);
+                      setSelectedContact(null); // Clear selection if typing manually
+                    }}
                   />
                 </div>
+                {recipient && recipient.length < 3 && !selectedContact && (
+                  <p className="text-red-500 text-xs -mt-2 mb-3">O destinatário deve ter pelo menos 3 caracteres.</p>
+                )} 
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-gray-400 text-xs">Contactos recentes</p>
                   <button 
@@ -334,9 +397,9 @@ export function TransferenciasScreen() {
               >
                 <p className="text-gray-500 text-xs mb-4" style={{ fontWeight: 500 }}>OS MEUS DADOS</p>
                 {[
-                  { label: "Nome", value: "João Macuácua" },
-                  { label: "Telemóvel", value: "+244 923 XXX XXX" },
-                  { label: "IBAN", value: "AO 1234 5678 9012" },
+                  { label: "Nome", value: user.name || "Utilizador AfriSol" },
+                  { label: "Telemóvel", value: user.phone || "N/A" },
+                  { label: "IBAN", value: accounts.length > 0 ? accounts[0].num : "N/A" },
                 ].map((row) => (
                   <div key={row.label} className="flex justify-between py-2.5 border-b border-gray-50 last:border-0">
                     <span className="text-gray-500 text-sm">{row.label}</span>
@@ -373,7 +436,8 @@ export function TransferenciasScreen() {
 
               <button
                 onClick={handleSend}
-                className="w-full py-4 rounded-xl text-white"
+                disabled={!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
+                className="w-full py-4 rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600, fontSize: "16px" }}
               >
                 Solicitar pagamento
@@ -444,6 +508,11 @@ export function TransferenciasScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+      <PinModal 
+        isOpen={isPinOpen} 
+        onClose={() => setIsPinOpen(false)} 
+        onConfirm={handlePinConfirm} 
+      />
       <ReceiptModal receipt={currentReceipt} onClose={() => setCurrentReceipt(null)} />
     </AnimatedLayout>
   );

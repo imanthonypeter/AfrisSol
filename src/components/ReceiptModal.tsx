@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { Check, Share2, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 export interface TransactionReceipt {
   type: string;
@@ -47,7 +48,7 @@ export function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
                 files: [file],
               });
             } else {
-              alert("A partilha não é suportada neste dispositivo.");
+              toast.info("A partilha não é suportada neste dispositivo.");
             }
           }
         });

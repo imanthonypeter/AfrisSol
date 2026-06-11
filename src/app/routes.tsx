@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { Root } from "./components/Root";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SplashScreen } from "./pages/SplashScreen";
 import { AuthScreen } from "./pages/AuthScreen";
 import { HomeScreen } from "./pages/HomeScreen";
@@ -20,13 +21,13 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: SplashScreen },
       { path: "auth", Component: AuthScreen },
-      { path: "home", Component: HomeScreen },
-      { path: "carteira", Component: CarteiraScreen },
-      { path: "transferencias", Component: TransferenciasScreen },
-      { path: "pagamentos", Component: PagamentosScreen },
-      { path: "recargas", Component: RecargasScreen },
-      { path: "historico", Component: HistoricoScreen },
-      { path: "perfil", Component: PerfilScreen },
+      { path: "home", Component: () => <ProtectedRoute><HomeScreen /></ProtectedRoute> },
+      { path: "carteira", Component: () => <ProtectedRoute><CarteiraScreen /></ProtectedRoute> },
+      { path: "transferencias", Component: () => <ProtectedRoute><TransferenciasScreen /></ProtectedRoute> },
+      { path: "pagamentos", Component: () => <ProtectedRoute><PagamentosScreen /></ProtectedRoute> },
+      { path: "recargas", Component: () => <ProtectedRoute><RecargasScreen /></ProtectedRoute> },
+      { path: "historico", Component: () => <ProtectedRoute><HistoricoScreen /></ProtectedRoute> },
+      { path: "perfil", Component: () => <ProtectedRoute><PerfilScreen /></ProtectedRoute> },
       { path: "termos", Component: TermsScreen },
       { path: "privacidade", Component: PrivacyScreen },
       { path: "*", Component: NotFoundScreen },

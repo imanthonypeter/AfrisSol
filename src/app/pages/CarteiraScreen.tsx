@@ -7,12 +7,13 @@ import { formatCurrency, convertAmount } from "../../utils/currency";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 export function CarteiraScreen() {
   const navigate = useNavigate();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [isCreatingCard, setIsCreatingCard] = useState(false);
+
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
@@ -21,7 +22,7 @@ export function CarteiraScreen() {
   const [customAccountName, setCustomAccountName] = useState("");
   const [initialTransfer, setInitialTransfer] = useState("");
   const [cvvVisible, setCvvVisible] = useState(false);
-  const { user, wallet, virtualCard, accounts, transactions, createVirtualCard, setVirtualCard, setWalletCard, addAccount, updateBalance, addTransaction } = useAppStore();
+  const { user, wallet, virtualCard, accounts, transactions, setVirtualCard, setWalletCard, addAccount, updateBalance, addTransaction } = useAppStore();
 
   const totalEntradas = transactions.filter(t => t.positive).reduce((sum, t) => sum + t.amount, 0);
   const totalSaidas = transactions.filter(t => !t.positive).reduce((sum, t) => sum + t.amount, 0);
@@ -154,14 +155,6 @@ export function CarteiraScreen() {
               className="relative rounded-2xl p-6 overflow-hidden flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-300 transition-all"
               style={{ background: "#f8fafc", minHeight: "190px" }}
             >
-              {isCreatingCard ? (
-                <div className="flex flex-col items-center justify-center">
-                  <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin mb-4" />
-                  <h4 className="text-gray-800 text-sm font-semibold">A criar cartão...</h4>
-                  <p className="text-gray-500 text-xs mt-1">Configurando os seus dados virtuais</p>
-                </div>
-              ) : (
-                <>
                   <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center mb-3 text-indigo-500">
                     <Plus size={24} />
                   </div>
@@ -176,8 +169,6 @@ export function CarteiraScreen() {
                   >
                     Criar Agora
                   </button>
-                </>
-              )}
             </motion.div>
           ) : (
             <motion.div
@@ -277,11 +268,9 @@ export function CarteiraScreen() {
                           if (cvvVisible) {
                             setCvvVisible(false);
                           } else {
-                            const confirmed = window.confirm("Confirmar identidade para revelar o CVV?");
-                            if (confirmed) {
-                              setCvvVisible(true);
-                              setTimeout(() => setCvvVisible(false), 10000);
-                            }
+                            setCvvVisible(true);
+                            toast.info("CVV revelado. Será ocultado em 10 segundos.");
+                            setTimeout(() => setCvvVisible(false), 10000);
                           }
                         }}
                         className="p-0.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
@@ -308,13 +297,23 @@ export function CarteiraScreen() {
               <button 
                 onClick={() => {
                   if (wallet.balance < 0) {
-                    alert("Não pode apagar o cartão porque o seu saldo está negativo.");
+                    toast.error("Não pode apagar o cartão porque o seu saldo está negativo.");
                     return;
                   }
-                  if (confirm("Tem certeza que deseja apagar o seu Cartão Virtual Visa?")) {
-                    setWalletCard(false);
-                    setVirtualCard(null);
-                  }
+                  toast.warning("Tem certeza que deseja apagar o seu Cartão Virtual Visa?", {
+                    action: {
+                      label: 'Apagar',
+                      onClick: () => {
+                        setWalletCard(false);
+                        setVirtualCard(null);
+                        toast.success("Cartão apagado com sucesso.");
+                      }
+                    },
+                    cancel: {
+                      label: 'Cancelar',
+                      onClick: () => {}
+                    }
+                  });
                 }}
                 className="text-xs text-red-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
               >

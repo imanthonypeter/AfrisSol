@@ -65,12 +65,24 @@ export async function createUser(uid: string, data: { name: string; email: strin
 
   // Criar conta principal com IBAN e saldo inicial
   const iban = generateIBAN();
-  await addDoc(collection(db, "accounts"), {
+  const mainAccountRef = await addDoc(collection(db, "accounts"), {
     userId: uid,
     accountName: "Conta principal",
     iban,
-    balance: 850000,
+    balance: 856000,
     color: "#162456",
+    createdAt: serverTimestamp(),
+  });
+
+  // Registar o depósito inicial
+  await addDoc(collection(db, "transactions"), {
+    senderAccountId: "system_deposit",
+    receiverAccountId: mainAccountRef.id,
+    senderUserId: "system",
+    receiverUserId: uid,
+    amount: 856000,
+    type: "deposit",
+    description: "Depósito inicial AfriSol",
     createdAt: serverTimestamp(),
   });
 
@@ -417,4 +429,60 @@ export async function getUserTransactions(uid: string): Promise<FirestoreTransac
     const bTime = b.createdAt?.toMillis() || 0;
     return bTime - aTime;
   });
+}
+
+// ─── Lógica de Pagamentos ────────────────────────────────────
+export async function payService(
+  uid: string,
+  serviceName: string,
+  reference: string,
+  amount: number
+): Promise<TransferResult> {
+  if (amount <= 0) {
+    return { success: false, message: "O valor deve ser maior que zero." };
+  }
+
+  const accounts = await getUserAccounts(uid);
+  const primaryAccount = accounts.find((a) => a.accountName === "Conta principal");
+
+  if (!primaryAccount) {
+    return { success: false, message: "Conta não encontrada." };
+  }
+
+  if (primaryAccount.balance < amount) {
+    return { success: false, message: "Saldo insuficiente." };
+  }
+
+  try {
+    const txRef = await runTransaction(db, async (transaction) => {
+      const senderRef = doc(db, "accounts", primaryAccount.id!);
+
+      const senderSnap = await transaction.get(senderRef);
+      const currentBalance = senderSnap.data()?.balance || 0;
+
+      if (currentBalance < amount) {
+        throw new Error("Saldo insuficiente.");
+      }
+
+      transaction.update(senderRef, { balance: increment(-amount) });
+
+      const txDocRef = doc(collection(db, "transactions"));
+      transaction.set(txDocRef, {
+        senderAccountId: primaryAccount.id,
+        receiverAccountId: "system_service",
+        senderUserId: uid,
+        receiverUserId: "system",
+        amount,
+        type: "payment",
+        description: `Pagamento de ${serviceName} - Ref: ${reference}`,
+        createdAt: serverTimestamp(),
+      });
+
+      return txDocRef.id;
+    });
+
+    return { success: true, message: "Pagamento realizado com sucesso!", transactionId: txRef };
+  } catch (error: any) {
+    return { success: false, message: error.message || "Erro ao processar o pagamento." };
+  }
 }

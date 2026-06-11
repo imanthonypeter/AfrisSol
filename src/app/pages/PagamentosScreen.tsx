@@ -3,7 +3,10 @@ import { Wifi, Zap, Droplets, Phone, Car, GraduationCap, Heart, ChevronRight, Cr
 import { useAppStore } from "../../store/useAppStore";
 import { AnimatedLayout } from "../../components/AnimatedLayout";
 import { SuccessCheckmark } from "../../components/SuccessCheckmark";
+import { PinModal } from "../components/PinModal";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { payService } from "../../services/firestore";
 
 const services = [
   { id: "visa", icon: <CreditCard size={22} />, label: "Cartão Visa", provider: "AfriSol", color: "#1a1f71", bg: "#E3E9F3" },
@@ -27,7 +30,10 @@ export function PagamentosScreen() {
   const [reference, setReference] = useState("");
   const [isCreatingCard, setIsCreatingCard] = useState(false);
   const [cvvVisible, setCvvVisible] = useState(false);
-  const { wallet, virtualCard, updateBalance, addTransaction, createVirtualCard, setVirtualCard, setWalletCard } = useAppStore();
+  const [isPinOpen, setIsPinOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [transactionRef, setTransactionRef] = useState<string>("");
+  const { wallet, virtualCard, updateBalance, addTransaction, createVirtualCard, setVirtualCard, setWalletCard, user } = useAppStore();
 
   const selectedService = services.find((s) => s.id === selected);
 
@@ -38,19 +44,51 @@ export function PagamentosScreen() {
   };
 
   const handlePay = () => {
-    setStep("success");
     const numAmount = parseFloat(amount);
-    if (!isNaN(numAmount) && numAmount > 0) {
-      updateBalance(-numAmount);
-      addTransaction({
-        id: Date.now(),
-        icon: selectedService?.id === "internet" ? "internet" : selectedService?.id === "electricidade" ? "electricity" : "other",
-        label: `Pagamento ${selectedService?.label}`,
-        sub: `Ref: ${reference}`,
-        amount: numAmount,
-        positive: false,
-        category: "Pagamento"
-      });
+    if (!amount || isNaN(numAmount) || numAmount <= 0) {
+      toast.error("Por favor, insira um valor válido.");
+      return;
+    }
+    if (numAmount > wallet.balance) {
+      toast.error("Saldo insuficiente.");
+      return;
+    }
+    setIsPinOpen(true);
+  };
+
+  const handlePinConfirm = async (_pin: string) => {
+    setIsPinOpen(false);
+    setIsProcessing(true);
+    
+    const numAmount = parseFloat(amount);
+    
+    try {
+      if (!user.uid) {
+        throw new Error("Usuário não autenticado.");
+      }
+      
+      const result = await payService(user.uid, selectedService?.label || "Serviço", reference || "N/A", numAmount);
+      
+      if (result.success) {
+        updateBalance(-numAmount);
+        addTransaction({
+          id: Date.now(),
+          icon: selectedService?.id || "other",
+          label: `Pagamento ${selectedService?.label}`,
+          sub: `Ref: ${reference || 'N/A'}`,
+          amount: numAmount,
+          positive: false,
+          category: "Pagamento"
+        });
+        setTransactionRef(result.transactionId || `PAG${Math.floor(Math.random() * 1000000)}`);
+        setStep("success");
+      } else {
+        toast.error(result.message);
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Ocorreu um erro no pagamento.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -161,15 +199,18 @@ export function PagamentosScreen() {
             <div className="bg-white rounded-2xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
               <label className="text-gray-500 text-xs mb-2 block" style={{ fontWeight: 500 }}>REFERÊNCIA / NÚMERO DE CONTA</label>
               <input
-                className="w-full outline-none text-gray-800 text-lg bg-transparent border-b border-gray-100 pb-2"
+                className={`w-full outline-none text-gray-800 text-lg bg-transparent border-b pb-2 ${reference && reference.length < 5 ? 'border-red-400' : 'border-gray-100'}`}
                 placeholder="Ex: 12345678"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 style={{ fontWeight: 600 }}
               />
+              {reference && reference.length < 5 && (
+                <p className="text-red-500 text-xs mt-1">A referência deve ter pelo menos 5 caracteres.</p>
+              )}
             </div>
 
-            <div className="bg-white rounded-2xl p-5" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
+            <div className={`bg-white rounded-2xl p-5 border-b-2 ${amount && (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) ? 'border-red-400' : 'border-transparent'}`} style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
               <label className="text-gray-500 text-xs mb-2 block" style={{ fontWeight: 500 }}>VALOR A PAGAR ({wallet.currency})</label>
               <input
                 type="number"
@@ -179,12 +220,16 @@ export function PagamentosScreen() {
                 onChange={(e) => setAmount(e.target.value)}
                 style={{ fontSize: "28px", fontWeight: 700 }}
               />
+              {amount && parseFloat(amount) > wallet.balance && (
+                <p className="text-red-500 text-xs mt-1">Saldo insuficiente. (Saldo actual: {wallet.balance} {wallet.currency})</p>
+              )}
             </div>
           </div>
 
           <button
             onClick={() => { if (amount && reference) setStep("confirm"); }}
-            className="w-full py-4 rounded-xl text-white mt-5"
+            disabled={!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0 || parseFloat(amount) > wallet.balance || !reference || reference.length < 5}
+            className="w-full py-4 rounded-xl text-white mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600, fontSize: "16px" }}
           >
             Continuar
@@ -243,12 +288,20 @@ export function PagamentosScreen() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-[320px] rounded-2xl p-5 text-white relative overflow-hidden mt-6 shadow-xl"
+                className={`w-full max-w-[320px] rounded-2xl p-5 text-white relative overflow-hidden mt-6 shadow-xl transition-all ${virtualCard?.isFrozen ? 'grayscale opacity-80' : ''}`}
                 style={{
                   background: "linear-gradient(135deg, #162456 0%, #1a2e6e 100%)",
                   aspectRatio: "1.586",
                 }}
               >
+                {virtualCard?.isFrozen && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 text-white font-bold text-lg">
+                      <Zap size={24} className="text-blue-300" />
+                      CONGELADO
+                    </div>
+                  </div>
+                )}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10" />
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F47C20] opacity-10 rounded-full -ml-8 -mb-8" />
                 
@@ -291,17 +344,38 @@ export function PagamentosScreen() {
                 </div>
               </motion.div>
 
-              <div className="flex justify-center mt-6">
+              <div className="flex justify-center mt-6 gap-4">
+                <button 
+                  onClick={() => {
+                    if (virtualCard) {
+                      setVirtualCard({ ...virtualCard, isFrozen: !virtualCard.isFrozen });
+                      toast.success(virtualCard.isFrozen ? "Cartão descongelado." : "Cartão congelado temporariamente.");
+                    }
+                  }}
+                  className="text-xs text-blue-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
+                >
+                  <Loader2 size={14} className={virtualCard?.isFrozen ? '' : 'rotate-180'} /> {virtualCard?.isFrozen ? "Descongelar Cartão" : "Congelar Cartão"}
+                </button>
                 <button 
                   onClick={() => {
                     if (wallet.balance < 0) {
-                      alert("Não pode apagar o cartão porque o seu saldo está negativo.");
+                      toast.error("Não pode apagar o cartão porque o seu saldo está negativo.");
                       return;
                     }
-                    if (confirm("Tem certeza que deseja apagar o seu Cartão Virtual Visa?")) {
-                      setWalletCard(false);
-                      setVirtualCard(null);
-                    }
+                    toast.warning("Tem certeza que deseja apagar o seu Cartão Virtual Visa?", {
+                      action: {
+                        label: 'Apagar',
+                        onClick: () => {
+                          setWalletCard(false);
+                          setVirtualCard(null);
+                          toast.success("Cartão apagado com sucesso.");
+                        }
+                      },
+                      cancel: {
+                        label: 'Cancelar',
+                        onClick: () => {}
+                      }
+                    });
                   }}
                   className="text-xs text-red-500 font-semibold flex items-center gap-1 hover:underline px-3 py-1.5"
                 >
@@ -341,10 +415,11 @@ export function PagamentosScreen() {
             </button>
             <button
               onClick={handlePay}
-              className="flex-1 py-4 rounded-xl text-white text-sm"
+              disabled={isProcessing}
+              className={`flex-1 py-4 rounded-xl text-white text-sm ${isProcessing ? 'opacity-70' : ''}`}
               style={{ background: "linear-gradient(135deg, #F47C20, #e06010)", fontWeight: 600 }}
             >
-              Pagar
+              {isProcessing ? "A processar..." : "Pagar"}
             </button>
           </div>
         </div>
@@ -357,7 +432,7 @@ export function PagamentosScreen() {
           </div>
           <h2 className="text-gray-800 mb-2" style={{ fontWeight: 700, fontSize: "20px" }}>Pagamento efectuado!</h2>
           <p className="text-gray-500 text-sm text-center mb-2">{selectedService?.label} pago com sucesso</p>
-          <p className="text-gray-400 text-xs mb-8">Referência: #PAG20240501</p>
+          <p className="text-gray-400 text-xs mb-8">Referência: {transactionRef || `#PAG${Math.floor(Math.random() * 1000000)}`}</p>
           <button
             onClick={handleBack}
             className="w-full py-4 rounded-xl text-white"
@@ -367,6 +442,12 @@ export function PagamentosScreen() {
           </button>
         </div>
       )}
+      
+      <PinModal 
+        isOpen={isPinOpen} 
+        onClose={() => setIsPinOpen(false)} 
+        onConfirm={handlePinConfirm} 
+      />
     </AnimatedLayout>
   );
 }
